@@ -1,0 +1,27 @@
+{
+  "name": "backendsgpp",
+  "version": "0.0.1",
+  "description": "API de backend para el sistema SGPP",
+  "main": "app.js",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "jsonwebtoken": "^7.1.9",
+    "multer": "^1.2.0",
+    "redis": "^2.6.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sgppfactory/sgppbackend.git"
+  },
+  "author": "Franco Soto <franco.soto.z@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sgppfactory/sgppbackend/issues"
+  },
+  "homepage": "https://github.com/sgppfactory/sgppbackend#readme"
+}
