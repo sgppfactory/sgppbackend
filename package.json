@@ -4,11 +4,9 @@
   "description": "API de backend para el sistema SGPP",
   "main": "app.js",
   "dependencies": {
-    "body-parser": "^1.15.2",
-    "express": "^4.14.0",
     "jsonwebtoken": "^7.1.9",
-    "multer": "^1.2.0",
-    "redis": "^2.6.2"
+    "redis": "^2.6.2",
+    "restify": "^4.1.1"
   },
   "devDependencies": {},
   "scripts": {

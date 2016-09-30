@@ -2,47 +2,56 @@
 
 // const redis = require("redis");
 // const http = require('http');
-const express = require('express');
-const bodyParser = require('body-parser');
-const multer = require('multer');
-const upload = multer(); // for parsing multipart/form-data
-const app = express();
+// const express = require('express');
+// const bodyParser = require('body-parser');
+// const multer = require('multer');
+// const upload = multer(); // for parsing multipart/form-data
+// const app = express();
+const restify = require('restify');
+const app = restify.createServer();
 const redis = require("./lib/redis");
 const redisDB = new redis({"host": "localhost","port": 6379});
 
 
-app.use(bodyParser.json()); // for parsing application/json
-app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+app.use(restify.bodyParser()); // for parsing application/json
+// app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 
-app.get('/user', (req, res) => {
-  res.send('Hello World!');
-});
-
+// server.get('/hello/:name', respond);
+// server.head('/hello/:name', respond);
 
 app.get('/user/:id', function(req, res, next) {
 	console.log('Request URL: user/', req.params.id);
-	redisDB.get(req.params.id).then(function(result) {
-		console.log(result); // "Stuff worked!"
-	}, function(err) {
-		console.log(err); // Error: "It broke"
-	})
-	next();
-}, function (req, res) {
-	console.log('Request Type:', req.method);
+	redisDB
+		.get(req.params.id)
+		.then((err,res)=> {
+			if(err) {
+				res.json({"msg":"Error"})
+			}
+			res.json(res)
+		}, function(err) {
+			console.log(err); // Error: "It broke"
+		})
+	// next();
 });
 
-app.post('/user',upload.array(), function(req, res, next) {
+app.post('/user', function(req, res, next) {
 	console.log(req.body)
-	// redisDB.set()
-	console.log('Request URL:', req.originalUrl);
-	res.json(req.body);	
-	next()
-}, function (req, res) {
-	console.log('Request Type:', req.method);
+
+	redisDB
+		.set('user:'+req.body.key,req.body.values)
+		.then((err,res) => {
+			if(err) {
+				res.json({"msg":"Error"})
+			}
+			console.log("cerveza loaded: "+res)
+			res.json("User loaded");	
+		}, function(err) {
+			console.log(err); // Error: "It broke"
+		});
 });
 
 app.listen(3000, () => {
-  console.log('Example app listening on port 3000!');
+  console.log('%s listening at %s', app.name, app.url);
 });
 
 // RedisServer.prototype.redisClientPrueba = function () {
