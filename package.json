@@ -4,9 +4,13 @@
   "description": "API de backend para el sistema SGPP",
   "main": "app.js",
   "dependencies": {
+    "f": "^1.0.2",
+    "fs": "0.0.1-security",
     "jsonwebtoken": "^7.1.9",
+    "mysql": "^2.11.1",
     "redis": "^2.6.2",
-    "restify": "^4.1.1"
+    "restify": "^4.1.1",
+    "underscore": "^1.8.3"
   },
   "devDependencies": {},
   "scripts": {
