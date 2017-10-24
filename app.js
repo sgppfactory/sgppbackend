@@ -1,131 +1,17 @@
 'use strict';
+// APP config
+// const config = require("lib/config"); //Config
+// // DBCONNECT
+// const redis = require("lib/redis")(config.redis_connect); //Manipulador de la conexión de la BD
+// const mysql = require("lib/mysql")(config.mysql_connect);
 
 const _ = require('underscore'); //Sólamente para tener algunas herramientas más para desarrollar
 const restify = require('restify'); //framework REST
-const mysql = require("./lib/mysql");
-const redis = require("./lib/redis"); //Manipulador de la conexión de la BD
-const auth = require("./lib/auth"); //Librería para manejar la autenticación
 const app = restify.createServer();
-
-const mysqlDB = new mysql({host: 'localhost',user: 'root',password : 'root',database : 'sgpp'});
-const redisDB = new redis({"host": "localhost","port": 6379});
-const authJWT = new auth();
 
 app.use(restify.bodyParser()); // for parsing application/json
 
-app.get('/user', authJWT.ensureAuthenticated, function(req, res, next) {
-	console.log('Request URL: '+req.method+' /user');
-	redisDB
-		.get('auth:'+req.token)
-		.then(
-			(result)=> {
-				// console.log(result,JSON.parse(result))
-				if(!result) {
-					res.json({"msg":"No se encuentran usuarios"})
-				}
-				res.json(result)
-			}
-		, 	(err) => {
-				res.end("No hay nada")
-			}
-		);
-});
-
-//Esta acción la voy a usar como ejemplo para guardar logs de actividad de usuarios
-app.post('/loguser', authJWT.ensureAuthenticated, function(req, res, next) {
-	console.log('Request URL: /user');
-	// var authHeader = req.headers.authorization.split(" ")
-	console.log(req.body,req.connection.remoteAddress)
-	// var payload = authJWT.getPayload(req.token)
-	redisDB
-		.sadd(
-			'loguser:'+req.payload.id
-		,	JSON.stringify({
-				ip:req.connection.remoteAddress
-			,	"accion":req.body.accion
-			,	time:Date.now()
-			})
-		)
-		.then(
-			(result)=> {
-				if(!result) {
-					res.json({"msg":"Hubo un error al insertar el log"})
-				}
-				res.json({"msg":"Logueo agregado"})
-			}
-		, 	(err) => {
-				res.json({"msg":"Hubo un error al insertar el log"})
-			}
-		);
-});
-
-app.post('/auth', function(req, res, next) {
-	mysqlDB
-		.login(req.body)
-		.then((result) => {
-			if(result.length > 0) {
-				//Capturo el token
-				var token = authJWT.generateToken(result[0]);
-				// Guardo en Redis la sesión
-				// TODO: implementar el log de usuario
-				// console.log(JSON.stringify(authJWT.getPayload(token)))
-				var payload = authJWT.getPayload(token)
-				redisDB
-					.set('auth:'+token, JSON.stringify(payload))
-					.then(
-						() => {
-							redisDB
-								.sadd(
-									'loguser:'+payload.id
-								,	JSON.stringify({
-										ip:req.connection.remoteAddress
-									,	"accion":"Ingreso"
-									,	time:Date.now()
-									})
-								)
-								.then(
-									(result)=> {
-										console.log("LogUser ingreso")
-									}
-								, 	(err) => {
-										console.log("error al registrar al LogUser ingreso")
-									}
-								);
-
-							res.json({"jwt": token, "msg": "Succesfully"});	
-						}
-					,	(err) => {
-							res.statusCode = 401
-							res.json({"msg":"Error al manipular la sesión, vuelva a loguearse"})
-						}
-					);	
-			} else {
-				res.statusCode = 401
-				res.json({"msg":"Nombre de usuario o contraseña incorrecto"})
-			}
-		},(err) => {
-			res.statusCode = 401
-			res.json({"msg":"Nombre de usuario o contraseña incorrecto"})
-		})
-});
-
-app.get('/loguser/:id', function(req, res, next) {
-	console.log('Request URL: '+req.method+' /loguser/'+req.params.id);
-	redisDB
-		.smembers('loguser:'+req.params.id)
-		.then(
-			(result)=> {
-				// console.log(result,JSON.parse(result))
-				if(!result) {
-					res.json({"msg":"No se encuentran logs de usuarios"})
-				}
-				res.json(result)
-			}
-		, 	(err) => {
-				res.end("Hubo un error en la consulta...")
-			}
-		);
-});
+const auth = require("routes/auth")(app);
 
 app.listen(3000, () => {
   	console.log('Server escuchando el puerto 3000 al server %s',app.url);

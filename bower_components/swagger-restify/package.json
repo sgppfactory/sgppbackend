@@ -1,0 +1,35 @@
+{
+  "name": "swagger-restify",
+  "description": "Document your restify rest api by jsDoc or yaml.",
+  "version": "1.1.1",
+  "author": "fliptoo <fliptoo.studio@gmail.com>, sposmen <sposmen@gmail.com>, eugene@takeaway.com",
+  "main": "./index",
+  "dependencies": {
+    "async": "~0.2.7",
+    "coffee-script": "*",
+    "doctrine": "*",
+    "js-yaml": "~2.1.0",
+    "restify": "^2.8.5",
+    "swagger-tools": "^0.9.5",
+    "underscore": "*"
+  },
+  "devDependencies": {
+    "jshint": "*"
+  },
+  "scripts": {
+    "test": "jshint --config jshint.cfg $(find . -name *.js | grep -v './node_modules')",
+    "postinstall": "bower install"
+  },
+  "keywords": [
+    "swagger",
+    "swagger-ui",
+    "restify",
+    "api",
+    "jsdoc",
+    "yml",
+    "yaml",
+    "coffee-script",
+    "restful"
+  ],
+  "repository": "git://github.com/yourdelivery/swagger-restify"
+}

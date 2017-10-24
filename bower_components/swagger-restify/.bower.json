@@ -1,0 +1,34 @@
+{
+  "name": "swagger-restify",
+  "main": "index.js",
+  "homepage": "https://github.com/vellotis/swagger-restify",
+  "authors": [
+    "Kaarel Raspel <kaarel.raspel@gmail.com>"
+  ],
+  "description": "",
+  "moduleType": [
+    "node"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "public/components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "swagger-ui": "~2.1.3"
+  },
+  "_release": "e15851f8c1",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "e15851f8c10024adc959b4233088e3b108353304"
+  },
+  "_source": "https://github.com/yourdelivery/swagger-restify.git",
+  "_target": "*",
+  "_originalSource": "https://github.com/yourdelivery/swagger-restify.git",
+  "_direct": true
+}
