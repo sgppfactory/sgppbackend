@@ -27,19 +27,19 @@ PorposeRoute = function(app){
 	 */
 	app.post('/porpose',authLib.ensureAuthenticated, function(req, res, next) {
 		model
-			.create(req.body)
+			.create(req.params)
 			.then((result) => {
 				console.log(result)
-				if(result == true) {
+				if(result) {
 					res.statusCode = 201
-					res.json({"msg":"Propuesta creada correctamente"})
+					res.json({"id": result,"message":"Propuesta creada correctamente","status":"OK"})
 				} else if(_.isArray(result)){
 					res.statusCode = 401
 					res.json(result)
 				}
 			},(err) => {
 				res.statusCode = 401
-				res.json({"msg":"Nombre de usuario o contraseña incorrecto"})
+				res.json({"message":"Nombre de usuario o contraseña incorrecto","status":"error"})
 			})
 	});
 	 
