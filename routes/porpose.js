@@ -33,13 +33,13 @@ PorposeRoute = function(app){
 				if(result) {
 					res.statusCode = 201
 					res.json({"id": result,"message":"Propuesta creada correctamente","status":"OK"})
-				} else if(_.isArray(result)){
-					res.statusCode = 401
-					res.json(result)
+				} else {
+					res.statusCode = 409
+					res.json({"msg":"Hubo un error al crear la propuesta, inténtelo nuevamente","status":"error"})
 				}
 			},(err) => {
-				res.statusCode = 401
-				res.json({"message":"Nombre de usuario o contraseña incorrecto","status":"error"})
+				res.statusCode = 409
+				res.json({"message":err,"status":"error"})
 			})
 	});
 	 

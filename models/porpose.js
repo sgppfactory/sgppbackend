@@ -5,29 +5,26 @@ const helper = require("../lib/validations");
 
 PorposalProject =  {
 	attr: {
-		title :{require: true, validation: 'isString'}
-	,	details: {require: true, validation: 'isString'}
-	,	id_node: {require: true, validation: 'isNumber'}
-	,	location: {require: true, validation: 'isString'}
-	,	amount: {require: false, validation: 'isNumber'}
-	,	id_stage: {require: true, validation: 'isNumber'}
-	,	id_cicle: {require: true, validation: 'isNumber'}
+		title : {require: true, validation: 'isString'}
+	,	details : {require: true, validation: 'isString'}
+	,	id_node : {require: true, validation: 'isNumber'}
+	,	location : {require: true, validation: 'isString'}
+	,	amount : {require: false, validation: 'isNumber'}
+	,	id_stage : {require: true, validation: 'isNumber'}
+	,	id_cicle : {require: true, validation: 'isNumber'}
 	,	type: {require: false}
 	},
 	create: function(params) {
-		console.log(params)
-		var mysqlDB = new mysql(config.mysql_connect);
+		validations = helper.validations(this.attr,params)
+		if(!validations) {
+			return new Promise((resolve, reject)=>{
+				var mysqlDB = new mysql(config.mysql_connect);
+				return mysqlDB.request(helper.buildInsertQuery('porpose_project', this.attr, values))
+			})
+		} 
 
-		if(helper.validations()) {
-			return mysqlDB.request(
-				'INSERT INTO porpose_project VALUES ("' 
-				+ 	params.title 
-				+ 	'","' 
-				+ 	params.details + ')'
-			)
-		}
 		return new Promise((resolve,reject) => {
-			reject("");
+			reject(validations);
 		})
 	},
 	get: function(params) {
