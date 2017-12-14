@@ -7,7 +7,7 @@ const authLib = require("../lib/auth"); //LibrerÃ­a para manejar la autenticaciÃ
  * description: All about API
  */
  
-AuthRoutes = function(app){
+module.exports = function(app){
 	/**
 	 * @swagger
 	 * path: /login
@@ -35,13 +35,13 @@ AuthRoutes = function(app){
 		model
 			.login(req.body)
 			.then((result) => {
-				if(result.length > 0) {
+				if(result) {
 					//Capturo el token
-					var token = authLib.generateToken(JSON.stringify(result[0]));
+					var token = authLib.generateToken(JSON.stringify(result.dataValues));
 					var payload = authLib.getPayload(token)
-
+					
 					model
-						.saveSession(token,result[0],payload,req.connection.remoteAddress)
+						.saveSession(token,result.dataValues,payload,req.connection.remoteAddress)
 						.then(
 							(resultRedis) => {
 								res.json({"jwt": token, "msg": "Succesfully"});
@@ -62,5 +62,3 @@ AuthRoutes = function(app){
 			})
 	});
 }
-
-module.exports = AuthRoutes

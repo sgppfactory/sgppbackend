@@ -1,21 +1,30 @@
 const _ = require('underscore'); //Sólamente para tener algunas herramientas más para desarrollar
-const config = require("../lib/config"); //Config
-const mysql = require("../lib/mysql");
+const md5 = require('crypto-js/md5'); 
+const model = require("./Model");
 const redis = require("../lib/redis"); //Manipulador de la conexión de la BD
+var redisDB = new redis(model.config.redis_connect);
 // var mysqlDB = new mysql(config.mysql_connect);
-// var redisDB = new redis(config.redis_connect);
+Mod = model.dbsql.define('user', {
+	username: model.cte.STRING,
+	password: model.cte.STRING,
+	firstLogin: {type:model.cte.BOOLEAN, field: 'first_login' },
+	idPerson: {type:model.cte.INTEGER, field: 'id_person' },
+	idRol: {type:model.cte.INTEGER, field: 'id_rol' }
+},{
+	tableName: 'user'
+})
 
-AuthModel = {
+module.exports = {
 	login: (userParams) => {
+		console.log(md5(userParams.username).toString())
 		if(_.isString(userParams.username) && _.isString(userParams.password)) {
-			var mysqlDB = new mysql(config.mysql_connect);
-			return mysqlDB.request(
-				'SELECT id,username FROM user WHERE username = "' 
-				+ 	userParams.username 
-				+ 	'" AND password = sha1(' 
-				+ 	userParams.password + ')'
-				//  AND active = 1
-			)
+			return Mod.findOne({
+				attributes: ['id', 'username']
+			,	where: {
+					username: userParams.username
+				,	password: md5(userParams.username).toString()
+				}
+			})
 		}
 
 		return new Promise((resolve,reject)=>{
@@ -23,7 +32,7 @@ AuthModel = {
 		});
 	}
 ,	saveSession: (token,userdata,payload,ip) => {
-		var redisDB = new redis(config.redis_connect);
+		// var redisDB = new redis(config.redis_connect);
 		return new Promise((resolve,reject)=>{
 			redisDB.multi()
 				.hset('auth:'+token, "payload", JSON.stringify(payload))
@@ -44,7 +53,7 @@ AuthModel = {
 			})
 	}
 ,	checkSession: function(token) {
-		var redisDB = new redis(config.redis_connect);
+		// var redisDB = new redis(config.redis_connect);
 		return new Promise((resolve,reject)=>{
 			redisDB
 				.hgetall('auth:'+token)
@@ -59,4 +68,4 @@ AuthModel = {
 
 
 
-module.exports = AuthModel
+// module.exports = AuthModel

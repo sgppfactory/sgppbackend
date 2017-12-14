@@ -7,15 +7,20 @@
 
 const _ = require('underscore'); //Sólamente para tener algunas herramientas más para desarrollar
 const restify = require('restify'); //framework REST
-var debug = require('debug'); //framework REST
+// var debug = require('debug');
+const sequelize = new (require('sequelize'))('sgpp', 'root', 'root', {host: 'localhost',dialect: 'mysql'});
+// const sequelize = new Sequelize('sgpp', 'root', 'root', {host: 'localhost',dialect: 'mysql'});
 
 const app = restify.createServer({name: 'sgppApi'});
 
 app.use(restify.bodyParser()); // for parsing application/json
 app.use(restify.plugins.queryParser());
-
+app.get('/status',(req,res,next)=>{
+	res.send('ready')
+});
 require("./routes/auth")(app);
-require("./routes/user")(app);
+require("./routes/porpose")(app);
+// require("./routes/user")(app);
 // app.pre(authLib.ensureAuthenticated);
 
 app.pre((req,res,next) => {
@@ -23,7 +28,6 @@ app.pre((req,res,next) => {
 	// debug('Request URL: '+req.method+' '+req.url)
 	next()
 });
-require("./routes/porpose")(app);
 
 app.listen(3000,'127.0.0.1', () => {
   	console.log('Server "%s" escuchando a la URI %s',app.name,app.url);
