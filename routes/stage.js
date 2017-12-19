@@ -1,10 +1,10 @@
-const model = require('../models/porpose');
+const model = require('../models/stage');
 const authLib = require('../lib/auth'); //Librería para manejar la autenticación
 
-module.exports = function(app) {
+module.exports = app => {
 	/**
 	 * @swagger
-	 * path: /porpose
+	 * path: /stage
 	 * operations:
 	 *   -  httpMethod: POST
 	 *      summary: Login with username and password
@@ -25,14 +25,13 @@ module.exports = function(app) {
 	 *          required: true
 	 *          dataType: string
 	 */
-	app.post('/porpose',authLib.ensureAuthenticated, function(req, res, next) {
+	app.post('/stage',authLib.ensureAuthenticated, function(req, res, next) {
 		model
 			.create(req.params)
 			.then((result) => {
-				console.log(result)
 				if(result) {
 					res.statusCode = 201
-					res.json({"id": result,"message":"Propuesta creada correctamente","status":"OK"})
+					res.json({"id": result,"message":"Etapa creada correctamente","status":"OK"})
 				} else {
 					res.statusCode = 409
 					res.json({"msg":"Hubo un error al crear la propuesta, inténtelo nuevamente","status":"error"})
@@ -45,7 +44,7 @@ module.exports = function(app) {
 	 
 	/**
 	 * @swagger
-	 * path: /porpose
+	 * path: /stage
 	 * operations:
 	 *   -  httpMethod: GET
 	 *      summary: Obtención de datos de un usuario
@@ -55,7 +54,7 @@ module.exports = function(app) {
 	 *      consumes: 
 	 *        - application/json
 	 */
-	app.get('/porpose',authLib.ensureAuthenticated, function(req, res, next) {
+	app.get('/stage',authLib.ensureAuthenticated, function(req, res, next) {
 		console.log(req.params)
 		model
 			.get(req.params)
@@ -65,7 +64,7 @@ module.exports = function(app) {
 					res.json({"message":result,"status":"OK"})
 				} else {
 					res.statusCode = 403
-					res.json({"msg":"Propuesta inexistente","status":"error"})
+					res.json({"msg":"Etapa inexistente","status":"error"})
 				}
 			},(err) => {
 				res.statusCode = 409

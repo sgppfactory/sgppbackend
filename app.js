@@ -18,8 +18,16 @@ app.use(restify.plugins.queryParser());
 app.get('/status',(req,res,next)=>{
 	res.send('ready')
 });
-require("./routes/auth")(app);
-require("./routes/porpose")(app);
+
+var routesArr = ["auth","porpose","node","cicle","stage"]
+
+for(var x = 0; routesArr.length > x; x++) {
+	require("./routes/" + routesArr[x])(app);
+}
+// require("./routes/porpose")(app);
+// require("./routes/node")(app);
+// require("./routes/cicle")(app);
+// require("./routes/stage")(app);
 // require("./routes/user")(app);
 // app.pre(authLib.ensureAuthenticated);
 

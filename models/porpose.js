@@ -1,79 +1,136 @@
 // const _ = require('underscore'); //Sólamente para tener algunas herramientas más para desarrollar
 // const helper = require("../lib/validations");
-model = require('Model');
+model = require('./Model');
+Node = require('./node');
 
-const PorposalProject =  model.define('porpose_project',{
-		id: { type: model.cte.INTEGER, primaryKey: true, autoIncrement: true },
-	,	title : {type: model.cte.STRING}
-	,	id_node : {type: model.cte.INTEGER
-		// ,	references: {
-		// 		// This is a reference to another model
-		// 		model: Node,
-		// 		// This is the column name of the referenced model
-		// 		key: 'id',
-		// 		// This declares when to check the foreign key constraint. PostgreSQL only.
-		// 		deferrable: model.cte.Deferrable.INITIALLY_IMMEDIATE
-		// 	}
+const PorposalProject =  model.dbsql.define(
+	'porpose_project'
+,	{
+		id: { type: model.cte.INTEGER, primaryKey: true, autoIncrement: true }
+	,	title : {
+			type: model.cte.STRING
+		,	allowNull : false
+		, 	validate: {
+				notEmpty: {
+					msg: "El título es requerido"
+				}
+			,	len: {
+					msg: "El título tiene un límite máximo de 250 caracteres"
+				,	args : [0,250]
+				}
+			}
 		}
-	,	details : {type: model.cte.TEXT}
-	,	location : {type: model.cte.STRING}
-	,	amount : {type: model.cte.STRING, allowNull: true}
-	,	id_stage : {type: model.cte.STRING}
-	,	id_cicle : {type: model.cte.STRING}
-	,	type: {type: model.cte.STRING}
+	,	idNode : {
+			type: model.cte.INTEGER
+		, 	field: 'id_node'
+		,	allowNull : false
+		,	validate: {
+				notNull: {
+					msg: "El nodo es requerido"
+				}
+			,	isInt : {
+					msg: "El campo nodo es incorrecto"
+				}
+			,	unique : value => {
+
+					// msg: "El campo nodo es incorrecto"
+				}
+			}
+		,	references: {
+				model: Node.getModel()
+			,	key: 'id'
+			}
+		}
+	,	details : {type: model.cte.TEXT, allowNull: true}
+	,	location : {
+			type: model.cte.TEXT
+		, 	allowNull: true
+		,	defaultValue: null
+		,	validate: { 
+				isJSON : {
+					msg : "El monto debe tener un formato de moneda del tipo XXXX.XX"
+				}
+			}
+		}
+	,	amount : {
+			type: model.cte.FLOAT
+		, 	allowNull: true
+		,	validate : {
+				isFloat: {
+					msg: "El monto debe tener un formato de moneda del tipo XXXX.XX"
+				}
+			,	max: {
+					args: 999999999999999.99
+				,	msg:"El monto tiene un límite máximo de 15 dígitos" 
+				}
+			}
+		}
+	,	idStage : {
+			type: model.cte.INTEGER
+		, 	field: 'id_stage'
+		,	validate: {
+				isInt : {
+					msg: "El campo de etapa es incorrecto"
+				}
+			}
+		}
+	,	idCicle : {
+			type: model.cte.INTEGER
+		, 	field: 'id_cicle'
+		,	validate: {
+				isInt : {
+					msg: "El campo ciclo es incorrecto"
+				}
+			}
+		}
+	,	type: {
+			type: model.cte.INTEGER
+		,	validate: {
+				isInt : {
+					msg: "El campo tipo es incorrecto"
+				}
+			}
+		}
+	,	active: {
+			type: model.cte.BOOLEAN
+		,	defaultValue : true
+		}
+	,	state: {
+			type: model.cte.ENUM('Creado', 'Cancelado', 'Avanzado - Propuesta', 'Proyecto nuevo', 'Avanzado - Proyecto', 'Finalizado')
+		,	isIn: {
+				args: [['Creado', 'Cancelado', 'Avanzado - Propuesta', 'Proyecto nuevo', 'Avanzado - Proyecto', 'Finalizado']]
+			,	msg: "El campo de estado es incorrecto"
+			}
+		}
+	},{
+		tableName: 'porpose_project'
+	,	timestamps: true
+	,	updatedAt : false
+	,	createdAt : 'created_at'
 	}
-	// attr: {
-	// 	title : {require: true, validation: 'isString'}
-	// ,	id_node : {require: true, validation: 'isNumber'}
-	// ,	details : {require: true, validation: 'isString'}
-	// ,	location : {require: true, validation: 'isString'}
-	// ,	amount : {require: false, validation: 'isNumber'}
-	// ,	id_stage : {require: true, validation: 'isNumber'}
-	// ,	id_cicle : {require: true, validation: 'isNumber'}
-	// ,	type: {require: false}
-	// },
-	// create: function(params) {
-	// 	validations = helper.validations(this.attr,params)
-	// 	if(!validations) {
-	// 		return new Promise((resolve, reject)=>{
-	// 			var mysqlDB = new mysql(config.mysql_connect);
-	// 			return mysqlDB.request(helper.buildInsertQuery('porpose_project', this.attr, values))
-	// 		})
-	// 	} 
+)
 
-	// 	return new Promise((resolve,reject) => {
-	// 		reject(validations);
-	// 	})
-	// },
-	// get: function(params) {
-	// 	return new Promise(function(resolve, reject){
-	// 		// _this.mysqlserver.connect();
-	// 		if(_.isNumber(userParams.id)) {
-	// 			var mysqlDB = new mysql(config.mysql_connect);
-	// 			// _this.mysqlserver
-	// 			mysqlDB.query(
-	// 				'SELECT * FROM porpose_project WHERE id = "' + userParams.id + '"'
-	// 			, 	function(err, rows, fields) {
-	// 					if(err) {
-	// 						reject(array());
-	// 					} else {
-	// 						resolve(rows);
-	// 					}
-	// 				}
-	// 			);
-				
-	// 			// _this.mysqlserver.end();
-	// 			mysqlDB.end()
-	// 		}
-	// 		else {
-	// 			// _this.mysqlserver.end();
-	// 			reject("Parámetros no válidos");
-	// 		} 
-	// 	});
-	// },
-	// search: function() {
-		
-	// }
+module.exports = {
+	getModel : () => {
+		return PorposalProject
+	}
+,	create :(params) => {
+		try {
+			return PorposalProject.create(params)
+		}catch(err) {
+			console.log(err)
+		}
+	}
+,	get: (id) => {
+		return PorposalProject.findOne(id)
+	}
+,	search: (params) => {
+		// filter:[{key:,value:,operator:}]
+		// filter = {}
+		// if(params.filters) {
+		// 	filter.where = params.filters.map
+		// }
+		// return PorposalProject.findAll(filter)
+		return PorposalProject.findAll()
+	}
 }
-
-module.exports = PorposalProject

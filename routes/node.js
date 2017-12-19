@@ -1,13 +1,13 @@
-const model = require('../models/porpose');
+const model = require('../models/node');
 const authLib = require('../lib/auth'); //Librería para manejar la autenticación
 
-module.exports = function(app) {
+module.exports = app => {
 	/**
 	 * @swagger
-	 * path: /porpose
+	 * path: /node
 	 * operations:
 	 *   -  httpMethod: POST
-	 *      summary: Login with username and password
+	 *      summary: Create a Node
 	 *      notes: Returns a user based on username
 	 *      responseClass: User
 	 *      nickname: porpose
@@ -25,17 +25,16 @@ module.exports = function(app) {
 	 *          required: true
 	 *          dataType: string
 	 */
-	app.post('/porpose',authLib.ensureAuthenticated, function(req, res, next) {
+	app.post('/node',authLib.ensureAuthenticated, (req, res, next) => {
 		model
 			.create(req.params)
 			.then((result) => {
-				console.log(result)
 				if(result) {
 					res.statusCode = 201
-					res.json({"id": result,"message":"Propuesta creada correctamente","status":"OK"})
+					res.json({"id": result,"message":"Nodo creado correctamente","status":"OK"})
 				} else {
 					res.statusCode = 409
-					res.json({"msg":"Hubo un error al crear la propuesta, inténtelo nuevamente","status":"error"})
+					res.json({"msg":"Hubo un error al crear el nodo, inténtelo nuevamente","status":"error"})
 				}
 			},(err) => {
 				res.statusCode = 409
@@ -55,8 +54,7 @@ module.exports = function(app) {
 	 *      consumes: 
 	 *        - application/json
 	 */
-	app.get('/porpose',authLib.ensureAuthenticated, function(req, res, next) {
-		console.log(req.params)
+	app.get('/node',authLib.ensureAuthenticated, function(req, res, next) {
 		model
 			.get(req.params)
 			.then((result) => {
@@ -65,11 +63,11 @@ module.exports = function(app) {
 					res.json({"message":result,"status":"OK"})
 				} else {
 					res.statusCode = 403
-					res.json({"msg":"Propuesta inexistente","status":"error"})
+					res.json({"msg":"El nodo solicitado no existe","status":"error"})
 				}
 			},(err) => {
 				res.statusCode = 409
-				res.json({"message":err,"status":"error"})
+				res.json({"message": err, "status":"error"})
 			})
 	});
 }

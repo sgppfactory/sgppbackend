@@ -16,7 +16,7 @@ Mod = model.dbsql.define('user', {
 
 module.exports = {
 	login: (userParams) => {
-		console.log(md5(userParams.username).toString())
+		// console.log(md5(userParams.username).toString())
 		if(_.isString(userParams.username) && _.isString(userParams.password)) {
 			return Mod.findOne({
 				attributes: ['id', 'username']
