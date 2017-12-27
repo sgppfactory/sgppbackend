@@ -1,9 +1,10 @@
 model = require('./Model');
 
-const Stage =  model.dbsql.define('stage',{
+const ProjectStep =  model.dbsql.define('advanceProject',{
 		id: { type: model.cte.INTEGER, primaryKey: true, autoIncrement: true }
-	,	name : {
+	,	idPorposeProject : {
 			type: model.cte.STRING
+		, 	field: 'id_porpose_project'
 		,	allowNull : false
 		, 	validate: {
 				notNull: {
@@ -15,20 +16,23 @@ const Stage =  model.dbsql.define('stage',{
 				}
 			}
 		}
-	,	isProject : {
-			type: model.cte.BOOLEAN
-		, 	field: 'is_project'
-		,	allowNull : true
-		,	defaultValue : false
+	,	percent : {
+			type: model.cte.FLOAT
+		,	allowNull : false
 		, 	validate: {
-				isBoolean: {
-					msg: "Debe ser un campo booleano"
+				isFloat: {
+					msg: "El monto debe tener un formato de moneda del tipo XXXX.XX"
+				}
+			,	max: {
+					args: 100.00
+				,	msg:"El monto tiene un límite máximo de 15 dígitos" 
 				}
 			}
 		}
-	,	date_init : {
+	,	dateInit : {
 			type: model.cte.DATE
 		, 	allowNull: false
+		,	field: 'date_init'
 		, 	validate: {
 				notNull: {
 					msg: "La fecha de comienzo es requerida"
@@ -38,32 +42,36 @@ const Stage =  model.dbsql.define('stage',{
 				}
 			}
 		}
-	,	order : {
-			type: model.cte.INTEGER
+	,	amount : {
+			type: model.cte.FLOAT
 		, 	allowNull: true
-		, 	validate: {
-				isInt: {
-					msg: "El orden debe ser un entero"
+		,	validate : {
+				isFloat: {
+					msg : "El monto debe tener un formato de moneda del tipo XXXX.XX"
+				}
+			,	max: {
+					args : 999999999999999.99
+				,	msg : "El monto tiene un límite máximo de 15 dígitos" 
 				}
 			}
 		}
-	,	active : {
-			type: model.cte.FLOAT
-		,	defaultValue : true
+	,	notes : {
+			type: model.cte.TEXT
+		, 	allowNull: true
 		}
 	},{
-		tableName: 'stage'
+		tableName: 'advance_project'
 	,	timestamps: false
 	}
 )
 
 module.exports = {
 	getModel : () => {
-		return Stage
+		return ProjectStep
 	}
 ,	create :(params) => {
 		try {
-			return Stage.create(params)
+			return ProjectStep.create(params)
 		}catch(err) {
 			console.log(err)
 			return new Promise((resolve, reject)=>{
@@ -71,17 +79,17 @@ module.exports = {
 			})
 		}
 	}
-,	get: (id) => {
-		return Stage.findById(id)
+,	get: id => {
+		return ProjectStep.findById(id)
 	}
-,	search: (params) => {
+,	search: params => {
 		// filter:[{key:,value:,operator:}]
 		// filter = {}
 		// if(params.filters) {
 		// 	filter.where = params.filters.map
 		// }
 		// return PorposalProject.findAll(filter)
-		return Stage.findAll()
+		return ProjectStep.findAll()
 	}
 }
 

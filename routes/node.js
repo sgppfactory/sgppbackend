@@ -7,10 +7,9 @@ module.exports = app => {
 	 * path: /node
 	 * operations:
 	 *   -  httpMethod: POST
-	 *      summary: Create a Node
-	 *      notes: Returns a user based on username
-	 *      responseClass: User
-	 *      nickname: porpose
+	 *      summary: Creación de un nodo
+	 *      responseClass: Node
+	 *      nickname: node
 	 *      consumes: 
 	 *        - text/html
 	 *      parameters:
@@ -31,7 +30,7 @@ module.exports = app => {
 			.then((result) => {
 				if(result) {
 					res.statusCode = 201
-					res.json({"id": result,"message":"Nodo creado correctamente","status":"OK"})
+					res.json({"result": result,"message":"Nodo creado correctamente","status":"OK"})
 				} else {
 					res.statusCode = 409
 					res.json({"msg":"Hubo un error al crear el nodo, inténtelo nuevamente","status":"error"})
@@ -44,19 +43,19 @@ module.exports = app => {
 	 
 	/**
 	 * @swagger
-	 * path: /porpose
+	 * path: /node
 	 * operations:
 	 *   -  httpMethod: GET
-	 *      summary: Obtención de datos de un usuario
-	 *      notes: Retorna información del usuario
-	 *      responseClass: Auth
-	 *      nickname: porpose
+	 *      summary: Obtención de datos de un nodo por Id de nodo
+	 *      notes: Retorna información del nodo
+	 *      responseClass: Node
+	 *      nickname: node
 	 *      consumes: 
 	 *        - application/json
 	 */
-	app.get('/node',authLib.ensureAuthenticated, function(req, res, next) {
+	app.get('/node/:id',authLib.ensureAuthenticated, function(req, res, next) {
 		model
-			.get(req.params)
+			.get(req.params.id)
 			.then((result) => {
 				if(result) {
 					res.statusCode = 200

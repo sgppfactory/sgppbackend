@@ -7,15 +7,15 @@ module.exports = app => {
 	 * path: /stage
 	 * operations:
 	 *   -  httpMethod: POST
-	 *      summary: Login with username and password
-	 *      notes: Returns a user based on username
-	 *      responseClass: User
-	 *      nickname: porpose
+	 *      summary: Create a stage
+	 *      notes: Returns a stage created
+	 *      responseClass: Stage
+	 *      nickname: stage
 	 *      consumes: 
-	 *        - text/html
+	 *        - application/json
 	 *      parameters:
-	 *        - name: username
-	 *          description: Your username
+	 *        - name: name
+	 *          description: Name of stage
 	 *          paramType: query
 	 *          required: true
 	 *          dataType: string

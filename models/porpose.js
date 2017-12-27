@@ -119,6 +119,9 @@ module.exports = {
 			return PorposalProject.create(params)
 		}catch(err) {
 			console.log(err)
+			return new Promise((resolve, reject)=>{
+				reject(err)
+			})
 		}
 	}
 ,	get: (id) => {

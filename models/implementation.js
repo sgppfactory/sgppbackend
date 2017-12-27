@@ -1,18 +1,34 @@
-// const _ = require('underscore'); //Sólamente para tener algunas herramientas más para desarrollar
-// const helper = require("../lib/validations");
+
 model = require('./Model');
 
-const Cicle =  model.dbsql.define('cicle',{
+const Implementation =  model.dbsql.define('Implementation',{
 		id: { 
 			type: model.cte.INTEGER
 		, 	primaryKey: true
 		, 	autoIncrement: true 
 		}
-	,	date : {
+	,	logo : {
 			type: model.cte.STRING
 		, 	allowNull: true
 		}
-	,	currency : {
+	,	name : {
+			type: model.cte.STRING
+		, 	allowNull: false
+		,	validations : {
+				notEmpty:{
+					msg: "El nombre es requerido"
+				}
+			,	len: {
+					msg: "El nombre tiene un límite máximo de 100 caracteres"
+				,	args : [0,100]
+				}
+			}
+		}
+	,	description : {
+			type: model.cte.TEXT
+		, 	allowNull: true
+		}
+	,	active : {
 			type: model.cte.BOOLEAN
 		, 	allowNull: true
 		, 	defaultValue: true
@@ -22,32 +38,36 @@ const Cicle =  model.dbsql.define('cicle',{
 				}
 			}
 		}
+	},{
+		tableName: 'implementation'
+	,	timestamps: false
 	}
 )
 
 module.exports = {
 	getModel : () => {
-		return Cicle
+		return Implementation
 	}
 ,	create :(params) => {
 		try {
-			return Cicle.create(params)
+			return Implementation.create(params)
 		}catch(err) {
+			console.log(err)
 			return new Promise((resolve, reject)=>{
 				reject(err)
 			})
 		}
 	}
 ,	get: id => {
-		return Cicle.findById(id)
+		return Implementation.findById(id)
 	}
-,	search: (params) => {
+,	findBy: (params) => {
 		// filter:[{key:,value:,operator:}]
 		// filter = {}
 		// if(params.filters) {
 		// 	filter.where = params.filters.map
 		// }
 		// return PorposalProject.findAll(filter)
-		return Cicle.findAll()
+		return Implementation.findAll()
 	}
 }

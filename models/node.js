@@ -10,7 +10,7 @@ const Node =  model.dbsql.define('node',{
 			type: model.cte.STRING
 		, 	allowNull: false
 		, 	validate: {
-				notEmpty: {
+				notNull: {
 					msg: "El título es requerido"
 				}
 			,	len: {
@@ -63,6 +63,11 @@ const Node =  model.dbsql.define('node',{
 				}
 			}
 		}
+	},{
+		tableName: 'node'
+	,	timestamps: false
+	,	updatedAt : false
+	,	createdAt : false
 	}
 )
 
@@ -71,9 +76,15 @@ module.exports = {
 		return Node		
 	}
 ,	create: params => {
-		return Node.create(params)
+		try {
+			return Node.create(params)
+		} catch(err) {
+			return new Promise((resolve, reject)=>{
+				reject(err)
+			})
+		}
 	}
 ,	get: id => {
-		return Node.getById(id)
+		return Node.findById(id)
 	}
 }
