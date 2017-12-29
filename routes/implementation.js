@@ -48,17 +48,17 @@ module.exports = function(app) {
 	 * path: /implementation/{idImplementation}
 	 * operations:
 	 *   -  httpMethod: GET
-	 *      summary: Obtención de datos de un usuario
+	 *      summary: Obtención de datos de la implementación
 	 *      notes: Retorna información del usuario
-	 *      responseClass: Auth
+	 *      responseClass: Implementation
 	 *      nickname: implementation
 	 *      consumes: 
 	 *        - application/json
 	 */
-	app.get('/implementation',authLib.ensureAuthenticated, function(req, res, next) {
+	app.get('/implementation/:id',authLib.ensureAuthenticated, function(req, res, next) {
 		console.log(req.params)
 		model
-			.get(req.params)
+			.get(req.params.id)
 			.then((result) => {
 				if(result) {
 					res.statusCode = 200

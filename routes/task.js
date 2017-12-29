@@ -1,15 +1,15 @@
-const model = require('../models/node');
+const model = require('../models/task');
 const authLib = require('../lib/auth'); //Librería para manejar la autenticación
 
 module.exports = app => {
 	/**
 	 * @swagger
-	 * path: /node
+	 * path: /task
 	 * operations:
 	 *   -  httpMethod: POST
-	 *      summary: Creación de un nodo
-	 *      responseClass: Node
-	 *      nickname: node
+	 *      summary: Creación de una tarea
+	 *      responseClass: Task
+	 *      nickname: task
 	 *      consumes: 
 	 *        - text/html
 	 *      parameters:
@@ -24,16 +24,16 @@ module.exports = app => {
 	 *          required: true
 	 *          dataType: string
 	 */
-	app.post('/node',authLib.ensureAuthenticated, (req, res, next) => {
+	app.post('/task',authLib.ensureAuthenticated, (req, res, next) => {
 		model
 			.create(req.params)
 			.then((result) => {
 				if(result) {
 					res.statusCode = 201
-					res.json({"result": result,"message":"Nodo creado correctamente","status":"OK"})
+					res.json({"result": result,"message":"Tarea creada correctamente","status":"OK"})
 				} else {
 					res.statusCode = 409
-					res.json({"msg":"Hubo un error al crear el nodo, inténtelo nuevamente","status":"error"})
+					res.json({"msg":"Hubo un error al crear la tarea, inténtelo nuevamente","status":"error"})
 				}
 			},(err) => {
 				res.statusCode = 409
@@ -43,17 +43,17 @@ module.exports = app => {
 	 
 	/**
 	 * @swagger
-	 * path: /node
+	 * path: /task
 	 * operations:
 	 *   -  httpMethod: GET
-	 *      summary: Obtención de datos de un nodo por Id de nodo
-	 *      notes: Retorna información del nodo
+	 *      summary: Obtención de datos de una tarea por Id
+	 *      notes: Retorna información del la tarea
 	 *      responseClass: Node
 	 *      nickname: node
 	 *      consumes: 
 	 *        - application/json
 	 */
-	app.get('/node/:id',authLib.ensureAuthenticated, function(req, res, next) {
+	app.get('/task/:id',authLib.ensureAuthenticated, function(req, res, next) {
 		model
 			.get(req.params.id)
 			.then((result) => {
@@ -62,7 +62,7 @@ module.exports = app => {
 					res.json({"message":result,"status":"OK"})
 				} else {
 					res.statusCode = 403
-					res.json({"msg":"El nodo solicitado no existe","status":"error"})
+					res.json({"msg":"La tarea solicitada no existe","status":"error"})
 				}
 			},(err) => {
 				res.statusCode = 409
@@ -72,13 +72,13 @@ module.exports = app => {
 
 	/**
 	 * @swagger
-	 * path: /node
+	 * path: /task
 	 * operations:
 	 *   -  httpMethod: GET
-	 *      summary: Buscador de nodos
-	 *      notes: Retorna información de nodos por filtros aplicados
-	 *      responseClass: Node
-	 *      nickname: node
+	 *      summary: Buscador de tareas
+	 *      notes: Retorna información de tareas por filtros aplicados
+	 *      responseClass: Task
+	 *      nickname: task
 	 *      consumes: 
 	 *        - application/json
 	 *      parameters:
@@ -98,7 +98,7 @@ module.exports = app => {
 	 *          required: false
 	 *          dataType: integer
 	 */
-	app.get('/node',authLib.ensureAuthenticated, function(req, res, next) {
+	app.get('/task',authLib.ensureAuthenticated, function(req, res, next) {
 		model
 			.get(req.params)
 			.then((result) => {

@@ -1,22 +1,21 @@
-const model = require('../models/stage');
+const model = require('../models/person');
 const authLib = require('../lib/auth'); //Librería para manejar la autenticación
 
 module.exports = app => {
 	/**
 	 * @swagger
-	 * path: /stage
+	 * path: /person
 	 * operations:
 	 *   -  httpMethod: POST
-	 *      summary: Create a stage
-	 *      notes: Returns a stage created
-	 *      responseClass: Stage
-	 *      nickname: stage
+	 *      summary: Creación de una persona con usuario si es seleccionado
+	 *      responseClass: Person
+	 *      nickname: person
 	 *      consumes: 
-	 *        - application/json
+	 *        - text/html
 	 *      parameters:
-	 *        - name: name
-	 *          description: Name of stage
-	 *          paramType: formParam
+	 *        - name: username
+	 *          description: Your username
+	 *          paramType: query
 	 *          required: true
 	 *          dataType: string
 	 *        - name: password
@@ -25,16 +24,16 @@ module.exports = app => {
 	 *          required: true
 	 *          dataType: string
 	 */
-	app.post('/stage',authLib.ensureAuthenticated, function(req, res, next) {
+	app.post('/person',authLib.ensureAuthenticated, (req, res, next) => {
 		model
 			.create(req.params)
 			.then((result) => {
 				if(result) {
 					res.statusCode = 201
-					res.json({"id": result,"message":"Etapa creada correctamente","status":"OK"})
+					res.json({"result": result,"message":"Persona creada correctamente","status":"OK"})
 				} else {
 					res.statusCode = 409
-					res.json({"msg":"Hubo un error al crear la propuesta, inténtelo nuevamente","status":"error"})
+					res.json({"msg":"Hubo un error al crear a la persona, inténtelo nuevamente","status":"error"})
 				}
 			},(err) => {
 				res.statusCode = 409
@@ -44,18 +43,17 @@ module.exports = app => {
 	 
 	/**
 	 * @swagger
-	 * path: /stage
+	 * path: /person
 	 * operations:
 	 *   -  httpMethod: GET
-	 *      summary: Obtención de datos de un usuario
-	 *      notes: Retorna información del usuario
-	 *      responseClass: Auth
-	 *      nickname: porpose
+	 *      summary: Obtención de datos de una persona por Id de persona
+	 *      notes: Retorna información del nodo
+	 *      responseClass: Person
+	 *      nickname: person
 	 *      consumes: 
 	 *        - application/json
 	 */
-	app.get('/stage:id',authLib.ensureAuthenticated, function(req, res, next) {
-		console.log(req.params)
+	app.get('/person/:id',authLib.ensureAuthenticated, function(req, res, next) {
 		model
 			.get(req.params.id)
 			.then((result) => {
@@ -64,11 +62,11 @@ module.exports = app => {
 					res.json({"message":result,"status":"OK"})
 				} else {
 					res.statusCode = 403
-					res.json({"msg":"Etapa inexistente","status":"error"})
+					res.json({"msg":"La persona solicitada no existe","status":"error"})
 				}
 			},(err) => {
 				res.statusCode = 409
-				res.json({"message":err,"status":"error"})
+				res.json({"message": err, "status":"error"})
 			})
 	});
 }
