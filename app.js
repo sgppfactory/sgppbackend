@@ -15,11 +15,18 @@ const app = restify.createServer({name: 'sgppApi'});
 
 app.use(restify.bodyParser()); // for parsing application/json
 app.use(restify.plugins.queryParser());
+app.use(
+	function crossOrigin(req,res,next){
+		res.header("Access-Control-Allow-Origin", "*");
+		res.header("Access-Control-Allow-Headers", "X-Requested-With");
+		return next();
+	}
+);
 app.get('/status',(req,res,next)=>{
 	res.send('ready')
 });
 
-var routesArr = ["auth","porpose","node","cicle","stage"]
+var routesArr = ["auth","porpose","node","cicle","stage","person","user"]
 
 for(var x = 0; routesArr.length > x; x++) {
 	require("./routes/" + routesArr[x])(app);

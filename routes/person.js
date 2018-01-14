@@ -43,7 +43,7 @@ module.exports = app => {
 	 
 	/**
 	 * @swagger
-	 * path: /person
+	 * path: /person/{id}
 	 * operations:
 	 *   -  httpMethod: GET
 	 *      summary: Obtención de datos de una persona por Id de persona
@@ -56,6 +56,35 @@ module.exports = app => {
 	app.get('/person/:id',authLib.ensureAuthenticated, function(req, res, next) {
 		model
 			.get(req.params.id)
+			.then((result) => {
+				if(result) {
+					res.statusCode = 200
+					res.json({"message":result,"status":"OK"})
+				} else {
+					res.statusCode = 403
+					res.json({"msg":"La persona solicitada no existe","status":"error"})
+				}
+			},(err) => {
+				res.statusCode = 409
+				res.json({"message": err, "status":"error"})
+			})
+	});
+
+	/**
+	 * @swagger
+	 * path: /person
+	 * operations:
+	 *   -  httpMethod: GET
+	 *      summary: Obtención de datos de personas
+	 *      notes: Búsqueda de personas
+	 *      responseClass: Person
+	 *      nickname: person
+	 *      consumes: 
+	 *        - application/json
+	 */
+	app.get('/person',authLib.ensureAuthenticated, function(req, res, next) {
+		model
+			.getAll()
 			.then((result) => {
 				if(result) {
 					res.statusCode = 200
