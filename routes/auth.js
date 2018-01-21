@@ -10,24 +10,24 @@ const authLib = require("../lib/auth"); //Librer√≠a para manejar la autenticaci√
 module.exports = function(app){
 	/**
 	 * @swagger
-	 * path: /login
+	 * path: /auth
 	 * operations:
 	 *   -  httpMethod: POST
 	 *      summary: Login with username and password
 	 *      notes: Returns a user based on username
 	 *      responseClass: User
-	 *      nickname: login
+	 *      nickname: auth
 	 *      consumes: 
 	 *        - text/html
 	 *      parameters:
 	 *        - name: username
 	 *          description: Your username
-	 *          paramType: query
+	 *          paramType: formParam
 	 *          required: true
 	 *          dataType: string
 	 *        - name: password
 	 *          description: Your password
-	 *          paramType: query
+	 *          paramType: formParam
 	 *          required: true
 	 *          dataType: string
 	 */

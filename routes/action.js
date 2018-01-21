@@ -1,5 +1,4 @@
-const model = require('../models/menu');
-// const modelUser = require('../models/user');
+const model = require('../models/action');
 const authLib = require("../lib/auth"); //Librería para manejar la autenticación
 
 UserRoute = function(app){
@@ -18,14 +17,14 @@ UserRoute = function(app){
 	 */
 	app.get('/menu',authLib.ensureAuthenticated, function(req, res, next) {
 		model
-			.get(req.token)
+			.findMenu(req.token)
 			.then((result) => {
 				if(!result) {
 					res.statusCode = 403
-					res.json({"msg":"No se encuentran usuarios"})
+					res.json({"msg":"No posee acciones habilitadas"})
 				}
 				res.statusCode = 200
-				res.json(result)
+				res.json({"result": result, "msg":"finded!"})
 			}
 			, 	(err) => {
 					res.statusCode = 403
