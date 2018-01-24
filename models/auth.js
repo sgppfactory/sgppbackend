@@ -80,7 +80,7 @@ module.exports = {
 		// console.log(md5(userParams.username).toString())
 		if(_.isString(userParams.username) && _.isString(userParams.password)) {
 			return Mod.findOne({
-				attributes: ['id', 'username']
+				attributes: ['id', 'username', 'avatar']
 			,	where: {
 					username: userParams.username
 				,	password: md5(userParams.username).toString()
@@ -96,7 +96,7 @@ module.exports = {
 		// var redisDB = new redis(config.redis_connect);
 		return new Promise((resolve,reject)=>{
 			ActionInstance.findAll({
-				attributes: ['id','name','url','label','menu']
+				attributes: ['id','name','url','label','menu','level']
 			, 	include: [{
 					model: RolInstance
 				, 	attributes:['id']
@@ -137,13 +137,11 @@ module.exports = {
 				})
 			})
 	}
-,	checkSession: function(token) {
-		// var redisDB = new redis(config.redis_connect);
+,	getUserBySession: function(token) {
 		return new Promise((resolve,reject)=>{
 			redisDB
-				.hgetall('auth:'+token)
-				.then((err,result) => {
-					console.log(result)
+				.hget('auth:'+token, 'userdata')
+				.then((result,err) => {
 					if(err) return reject(err)
 					resolve(result)
 				});

@@ -41,7 +41,7 @@ module.exports = function(app){
 					var payload = authLib.getPayload(token)
 					
 					model
-						.saveSession(token,result.dataValues,payload,req.connection.remoteAddress)
+						.saveSession(token, result.dataValues, payload, req.connection.remoteAddress)
 						.then(
 							(resultRedis) => {
 								res.json({"jwt": token, "msg": "Succesfully"});

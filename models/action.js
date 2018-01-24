@@ -47,22 +47,20 @@ const Action =  model.dbsql.define('action',{
 		}
 	}
 ,	level : {
-		type: model.cte.BOOLEAN
+		type: model.cte.INTEGER
 	, 	allowNull: true
-	, 	defaultValue: true
 	,	validations : {
 			isBoolean:{
-				msg: "Debe ser un valor booleano"
+				msg: "Debe ser un valor entero"
 			}
 		}
 	}
 ,	url : {
-		type: model.cte.BOOLEAN
+		type: model.cte.STRING
 	, 	allowNull: true
-	, 	defaultValue: true
 	,	validations : {
 			isBoolean:{
-				msg: "Debe ser un valor booleano"
+				msg: "Debe ser un valor entero"
 			}
 		}
 	}
