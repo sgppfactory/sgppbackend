@@ -19,4 +19,5 @@ module.exports = {
 	dbsql: 	sequelize
 ,	config: config
 ,	cte: 	Sequelize
+,	Op: 	Sequelize.Op
 };

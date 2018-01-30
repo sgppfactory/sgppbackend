@@ -84,18 +84,27 @@ module.exports = app => {
 	 */
 	app.get('/person',authLib.ensureAuthenticated, function(req, res, next) {
 		model
-			.getAll()
+			.findAll(req.params)
 			.then((result) => {
-				if(result) {
-					res.statusCode = 200
-					res.json({"message":result,"status":"OK"})
-				} else {
-					res.statusCode = 403
-					res.json({"msg":"La persona solicitada no existe","status":"error"})
-				}
+				model
+					.count(req.params)
+					.then((resultCount) => {
+						if(result) {
+							res.statusCode = 200
+							res.json({
+								"result": result,
+								"total": resultCount.total,
+								"pages": result.pages ? result.pages : 0,
+								"status": "OK"
+							})
+						} else {
+							res.statusCode = 403
+							res.json({"result":[],"status":"error"})
+						}
+					})
 			},(err) => {
 				res.statusCode = 409
-				res.json({"message": err, "status":"error"})
+				res.json({"result": err, "status":"error"})
 			})
 	});
 }

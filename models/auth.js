@@ -83,7 +83,7 @@ module.exports = {
 				attributes: ['id', 'username', 'avatar']
 			,	where: {
 					username: userParams.username
-				,	password: md5(userParams.username).toString()
+				,	password: md5(userParams.password).toString()
 				}
 			})
 		}
