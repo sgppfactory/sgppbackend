@@ -93,8 +93,10 @@ module.exports = app => {
 							res.statusCode = 200
 							res.json({
 								"result": result,
-								"total": resultCount.total,
-								"pages": result.pages ? result.pages : 0,
+								"total": resultCount,
+								"pages": (req.params.bypage 
+										? 	parseInt(resultCount / req.params.bypage) + 1
+										: 	parseInt(resultCount / 15) + 1 ),
 								"status": "OK"
 							})
 						} else {

@@ -1,4 +1,5 @@
 model = require('./Model');
+const search = require('../lib/search');
 _ = require('underscore');
 
 const Person =  model.dbsql.define('person',{
@@ -102,71 +103,22 @@ module.exports = {
 		return Person.findById(id)
 	}
 ,	findAll: params => {
-		// filter:[{key:,value:,operator:}]
-		// console.log(params)
-		filter = _buildFilter(params.filter)
-		// console.log(filter)
-		return Person.findAll({
-			where: filter
-		})
+		if(_.isEmpty(params)) {
+			return Person.findAll()
+		}
+
+		let searchObj = new search.Search(params)
+		tosearch = searchObj.getSearch(params)
+		return Person.findAll(tosearch)
 	}
 ,	count: params => {
-		filter = _buildFilter(params.filter)
+		if(_.isEmpty(params)) {
+			return Person.count()
+		}
+		let searchObj = new search.Search(params)
+		filter = searchObj.buildFilter(params.filter)
 		return 	Person.count({
 			where: filter
 		})
 	}
-}
-
-_buildFilter = filters => {
-	filter = {}
-	if(filters) {
-		filters = _.map(filters, (valueToParse) => {
-			return JSON.parse(valueToParse)
-		})
-		filter[model.Op.or] = _.filter(filters, (valueToSearch) => {
-			return (_.isString(valueToSearch.operator_sup) 
-				&& 	valueToSearch.operator_sup.trim().toLowerCase() == "or"
-				&&	!_.isUndefined(valueToSearch.value) 
-				&& 	valueToSearch.value !== "")
-		})
-
-		filter[model.Op.and] = _.filter(filters, (valueToSearch) => {
-			return (_.isString(valueToSearch.operator_sup) 
-				&& 	valueToSearch.operator_sup.trim().toLowerCase() == "and"
-				&&	!_.isUndefined(valueToSearch.value) 
-				&& 	valueToSearch.value !== "")
-		})
-
-		filter[model.Op.or] = _.map(filter[model.Op.or], (valueToSearch) => {
-			var aux = {}
-			if(_.isString(valueToSearch.operator) 
-				&& 	valueToSearch.operator.trim().toLowerCase() == "like") {
-				aux[valueToSearch.key] = {}
-				aux[valueToSearch.key][model.Op.like] = '%' + valueToSearch.value + '%'
-			} else {
-				aux[valueToSearch.key] = valueToSearch.value
-			}
-			return aux
-		})
-
-		filter[model.Op.and] = _.map(filter[model.Op.and], (valueToSearch) => {
-			var aux = {}
-			if(_.isString(valueToSearch.operator) 
-				&& 	valueToSearch.operator.trim().toLowerCase() == "like") {
-				aux[valueToSearch.key] = {}
-				aux[valueToSearch.key][model.Op.like] = '%' + valueToSearch.value + '%'
-			} else {
-				aux[valueToSearch.key] = valueToSearch.value
-			}
-			return aux
-		})
-
-		// console.log(filter)
-		// if(_.isArray(filter[model.Op.and]) && filter[model.Op.and].length > 0 ) {
-			
-		// }
-	}
-
-	return filter
 }
