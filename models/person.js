@@ -1,5 +1,6 @@
 model = require('./Model');
 const search = require('../lib/search');
+const user = require('./auth');
 _ = require('underscore');
 
 const Person =  model.dbsql.define('person',{
@@ -72,6 +73,15 @@ const Person =  model.dbsql.define('person',{
 				}
 			}
 		}
+	,	dateBirth : {
+			type: model.cte.DATE
+		, 	allowNull: true
+		,	validations : {
+				isDate:{
+					msg: "El formato de la fecha de nacimiento debe ser dd/mm/yyyy"
+				}
+			}
+		}
 	,	active : {
 			type: model.cte.BOOLEAN
 		, 	allowNull: false
@@ -85,6 +95,8 @@ const Person =  model.dbsql.define('person',{
 	},{
 		tableName: 'person'
 	,	timestamps: false
+	,	createdAt: 'created_at'
+	,	updatedAt: false
 	}
 )
 
@@ -93,11 +105,23 @@ module.exports = {
 		return Person
 	}
 ,	create : params => {
-		try {
-			return Person.create(params)
-		}catch(err) {
-			console.log(err)
-		}
+		return Promise((resolve, reject) => {
+			Person.create(params)
+				.then((result) => {
+					if (params.withuser) {
+						user.getModel().create()
+							.then((result) => {
+								resolve(result)
+							}, (err) => {
+								reject(err)
+							})
+					} else {
+						resolve(result)
+					}
+				}, (err) => {
+					reject(err)
+				})
+		})
 	}
 ,	get: id => {
 		return Person.findById(id)

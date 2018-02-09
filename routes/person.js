@@ -109,4 +109,33 @@ module.exports = app => {
 				res.json({"result": err, "status":"error"})
 			})
 	});
+
+	/**
+	 * @swagger
+	 * path: /person
+	 * operations:
+	 *   -  httpMethod: DELETE
+	 *      summary: Obtención de datos de personas
+	 *      notes: Búsqueda de personas
+	 *      responseClass: Person
+	 *      nickname: person
+	 *      consumes: 
+	 *        - application/json
+	 */
+	app.delete('/person',authLib.ensureAuthenticated, function(req, res, next) {
+		model
+			.delete(req.params.id)
+			.then((result) => {
+				if(result) {
+					res.statusCode = 200
+					res.json({"message":result,"status":"OK"})
+				} else {
+					res.statusCode = 403
+					res.json({"msg":"La persona solicitada no existe","status":"error"})
+				}
+			},(err) => {
+				res.statusCode = 409
+				res.json({"message": err, "status":"error"})
+			})
+	});
 }

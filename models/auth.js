@@ -38,6 +38,24 @@ Mod = model.dbsql.define('user', {
 ,	createdAt : false
 })
 
+Auditory = model.dbsql.define('user_auditory', {
+	ip: model.cte.STRING,
+	dateHour: model.cte.DATE,
+	idUser: {
+		type:model.cte.INTEGER
+	, 	field: 'id_user' 
+	,	references: {
+			model: Mod
+		,	key: 'id'
+		}
+	}
+},{
+	tableName: 'user_auditory'
+,	timestamps: false
+,	updatedAt : false
+,	createdAt : false
+})
+
 ActionRol = model.dbsql.define('action_rol', {
 	idAction: {
 		type:model.cte.INTEGER
@@ -129,15 +147,22 @@ module.exports = {
 						})
 					)
 					.exec((err,result)=>{
+						// No voy a tomar mucho en cuenta si se crea la auditoría o no...
+						Auditory.create({
+							ip: ip
+						,	idUser: userdata.id
+						});
+
 						if(err) return reject(err)
 						resolve(result)
 					})
 				},(error) => {
-					console.log(error)
+					reject(error)
+					// console.log(error)
 				})
 			})
 	}
-,	getUserBySession: function(token) {
+,	getUserBySession: (token) => {
 		return new Promise((resolve,reject)=>{
 			redisDB
 				.hget('auth:'+token, 'userdata')
@@ -147,8 +172,7 @@ module.exports = {
 				});
 		});
 	}
+,	getModel: () => {
+		return Mod
+	}
 }
-
-
-
-// module.exports = AuthModel
