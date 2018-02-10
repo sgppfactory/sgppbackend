@@ -122,13 +122,13 @@ module.exports = app => {
 	 *      consumes: 
 	 *        - application/json
 	 */
-	app.delete('/person',authLib.ensureAuthenticated, function(req, res, next) {
+	app.del('/person/:id',authLib.ensureAuthenticated, function(req, res, next) {
 		model
 			.delete(req.params.id)
 			.then((result) => {
 				if(result) {
 					res.statusCode = 200
-					res.json({"message":result,"status":"OK"})
+					res.json({"message":"Persona deshabilitada correctamente", "id": req.params.id ,"status":"OK"})
 				} else {
 					res.statusCode = 403
 					res.json({"msg":"La persona solicitada no existe","status":"error"})

@@ -35,7 +35,7 @@ Mod = model.dbsql.define('user', {
 	tableName: 'user'
 ,	timestamps: false
 ,	updatedAt : false
-,	createdAt : false
+,	createdAt : 'create_time'
 })
 
 Auditory = model.dbsql.define('user_auditory', {

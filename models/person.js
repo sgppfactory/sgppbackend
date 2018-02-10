@@ -1,7 +1,24 @@
 model = require('./Model');
 const search = require('../lib/search');
 const user = require('./auth');
+const md5 = require('crypto-js/md5'); 
 _ = require('underscore');
+const nodemailer = require('nodemailer');
+
+var transporter = nodemailer.createTransport({
+	service: 'gmail',
+	auth: {
+		user: 'franco.soto.z@gmail.com',
+		pass: 'simco2016cotiave'
+	}
+})
+
+var mailOptions = {
+	from: 'franco.soto.z@gmail.com',
+	subject: 'Creación de usuario para SGPP'
+}
+
+var htmlBody = '<h3>Bienvenidos al sistema de gestión de Presupuestos Participativos</h3><p>A partir de ahora, puede ingresar al sistema con la siguiente credencial.</p><p><b>Usuario: {{username}}</b></p><p><b>Contraseña: {{pass}}</b></p><p>Recuerde que puede cambiar su contraseña una vez ingresado al sistema.</p>'
 
 const Person =  model.dbsql.define('person',{
 		id: { 
@@ -75,6 +92,7 @@ const Person =  model.dbsql.define('person',{
 		}
 	,	dateBirth : {
 			type: model.cte.DATE
+		, 	field: 'date_birth' 
 		, 	allowNull: true
 		,	validations : {
 				isDate:{
@@ -108,13 +126,37 @@ module.exports = {
 		return Promise((resolve, reject) => {
 			Person.create(params)
 				.then((result) => {
+					console.log(result)
 					if (params.withuser) {
-						user.getModel().create()
-							.then((result) => {
-								resolve(result)
-							}, (err) => {
-								reject(err)
-							})
+						password = Math.random() * Date.now()
+						user.getModel().create({
+							username: params.email
+						,	password: md5(password).toString()
+						,	idRol: params.rol
+						,	firstLogin: false
+						,	idPerson: result.person
+						}).then((result) => {
+							transporter.sendMail(
+								_.extend(
+									mailOptions
+								,	{
+										html: htmlBody
+											.replace("{{username}}", params.email)
+											.replace("{{pass}}", password)
+									,	to: params.email
+									}
+								)
+							,	(error, info) => {
+									if(error) {
+										resolve(result)
+									} else {
+										reject(error)
+									}
+								}
+							)
+						}, (err) => {
+							reject(err)
+						})
 					} else {
 						resolve(result)
 					}
@@ -127,22 +169,30 @@ module.exports = {
 		return Person.findById(id)
 	}
 ,	findAll: params => {
-		if(_.isEmpty(params)) {
-			return Person.findAll()
-		}
-
 		let searchObj = new search.Search(params)
 		tosearch = searchObj.getSearch(params)
 		return Person.findAll(tosearch)
 	}
 ,	count: params => {
-		if(_.isEmpty(params)) {
-			return Person.count()
-		}
 		let searchObj = new search.Search(params)
 		filter = searchObj.buildFilter(params.filter)
 		return 	Person.count({
 			where: filter
+		})
+	}
+,	delete: idPerson => {
+		if(_.isEmpty(idPerson)) {
+			return Promise((resolve, reject) => {
+				reject("Error de parámetros")
+			})
+		}
+
+		return Person.update({
+			active: false
+		}, {
+			where: {
+				id: idPerson
+			}
 		})
 	}
 }
