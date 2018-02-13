@@ -4,6 +4,7 @@ const model = require("./Model");
 const Rol = require("./rol");
 const Person = require("./person");
 const Action = require("./action");
+const Impl = require("./implementation");
 const redis = require("../lib/redis"); //Manipulador de la conexión de la BD
 var redisDB = new redis(model.config.redis_connect);
 // var mysqlDB = new mysql(config.mysql_connect);
@@ -102,6 +103,7 @@ module.exports = {
 			,	where: {
 					username: userParams.username
 				,	password: md5(userParams.password).toString()
+				,	active: true
 				}
 			})
 		}
@@ -117,7 +119,7 @@ module.exports = {
 				attributes: ['id','name','url','label','menu','level']
 			, 	include: [{
 					model: RolInstance
-				, 	attributes:['id']
+				, 	attributes:['id','idImplementation']
 				, 	include:[{
 						model: Mod
 					,	where: {id : userdata.id}
@@ -125,40 +127,55 @@ module.exports = {
 					}]
 				}]
 			}).then((actionToSave) => {
-				actions = _.map(
-					actionToSave
-				,	function(acti){
-						delete acti.dataValues.rols
-						return acti.dataValues
-					}
-				)
+				if(!_.isUndefined(actionToSave[0]) && !_.isEmpty(actionToSave[0].dataValues.rols)) {
+					rol = actionToSave[0].dataValues.rols[0].dataValues
+				} else {
+					reject("El usuario no posee permiso")
+				}
 
-				redisDB.multi()
-					.hset('auth:'+token, "payload", JSON.stringify(payload))
-					.expire('auth:'+token, 1000000)
-					.hset('auth:'+token, "userdata", JSON.stringify(userdata))
-					.hset('auth:'+token, "actions", JSON.stringify(actions))
-					.sadd(
-						'loguser:' + userdata.id
-					,	JSON.stringify({
-							ip: ip
-						,	"accion": "Ingreso"
-						,	time: Date.now()
-						})
-					)
-					.exec((err,result)=>{
-						// No voy a tomar mucho en cuenta si se crea la auditoría o no...
-						Auditory.create({
-							ip: ip
-						,	idUser: userdata.id
-						});
+				Impl.get(rol.idImplementation)
+					.then((implementation) => {
+						if(_.isEmpty(implementation.dataValues)) {
+							reject("Implementación deshabilitada")
+						}
 
-						if(err) return reject(err)
-						resolve(result)
+						actions = _.map(
+							actionToSave
+						,	function(acti) {
+								delete acti.dataValues.rols
+								return acti.dataValues
+							}
+						)
+
+						redisDB.multi()
+							.hset('auth:'+token, "payload", JSON.stringify(payload))
+							.expire('auth:'+token, 1000000)
+							.hset('auth:'+token, "userdata", JSON.stringify(userdata))
+							.hset('auth:'+token, "implementation", JSON.stringify(implementation))
+							.hset('auth:'+token, "actions", JSON.stringify(actions))
+							.sadd(
+								'loguser:' + userdata.id
+							,	JSON.stringify({
+									ip: ip
+								,	"accion": "Ingreso"
+								,	time: Date.now()
+								})
+							)
+							.exec((err,result)=>{
+								// No voy a tomar mucho en cuenta si se crea la auditoría o no...
+								Auditory.create({
+									ip: ip
+								,	idUser: userdata.id
+								});
+
+								if(err) return reject(err)
+								resolve(result)
+							})
+					},(err)=> {
+						reject(err)
 					})
 				},(error) => {
 					reject(error)
-					// console.log(error)
 				})
 			})
 	}

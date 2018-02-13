@@ -1,7 +1,10 @@
+const model = require('./Model');
+const Auth = require('./auth');
+// const Rol = require('./rol');
+const redis = require("../lib/redis"); //Manipulador de la conexión de la BD
+var redisDB = new redis(model.config.redis_connect);
 
-model = require('./Model');
-
-const Implementation =  model.dbsql.define('Implementation',{
+const Implementation =  model.dbsql.define('implementation',{
 		id: { 
 			type: model.cte.INTEGER
 		, 	primaryKey: true
@@ -48,18 +51,32 @@ module.exports = {
 	getModel : () => {
 		return Implementation
 	}
-,	create :(params) => {
+,	create: params => {
 		try {
 			return Implementation.create(params)
 		}catch(err) {
-			console.log(err)
 			return new Promise((resolve, reject)=>{
 				reject(err)
 			})
 		}
 	}
 ,	get: id => {
-		return Implementation.findById(id)
+		return Implementation.find({
+			attributes: ['id', 'logo', 'name', 'description']
+		,	where: {
+				[model.Op.and]: [{id: id}, {active: true}]
+			}
+		})
+	}
+,	getByUser: token => {
+		return new Promise((resolve,reject)=>{
+			redisDB
+				.hget('auth:'+token, 'implementation')
+				.then((result,err) => {
+					if(err) return reject(err)
+					resolve(result)
+				});
+		});
 	}
 ,	findBy: (params) => {
 		// filter:[{key:,value:,operator:}]

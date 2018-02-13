@@ -22,9 +22,10 @@ UserRoute = function(app){
 				if(!result) {
 					res.statusCode = 403
 					res.json({"msg":"No posee acciones habilitadas"})
+				} else {
+					res.statusCode = 200
+					res.json({"result": result, "msg":"finded!"})
 				}
-				res.statusCode = 200
-				res.json({"result": result, "msg":"finded!"})
 			}
 			, 	(err) => {
 					res.statusCode = 403

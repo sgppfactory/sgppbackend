@@ -1,5 +1,6 @@
-
-model = require('./Model');
+const model = require('./Model');
+const redis = require("../lib/redis"); //Manipulador de la conexión de la BD
+var redisDB = new redis(model.config.redis_connect);
 
 const Rol =  model.dbsql.define('rol',{
 		id: { 
@@ -22,6 +23,7 @@ const Rol =  model.dbsql.define('rol',{
 		}
 	,	idImplementation : {
 			type: model.cte.INTEGER
+		, 	field: 'id_implementation'
 		, 	allowNull: false
 		,	validations : {
 				isInteger:{
@@ -39,23 +41,35 @@ module.exports = {
 	getModel : () => {
 		return Rol
 	}
-// ,	create :(params) => {
-// 		try {
-// 			return Cicle.create(params)
-// 		}catch(err) {
-// 			console.log(err)
-// 		}
-// 	}
-,	get: (id) => {
-		return Rol.findOne(id)
-	}
-,	findAll: (params) => {
-		// filter:[{key:,value:,operator:}]
-		// filter = {}
-		// if(params.filters) {
-		// 	filter.where = params.filters.map
-		// }
-		// return PorposalProject.findAll(filter)
-		return Rol.findAll()
+,	get: token => {
+		return new Promise((resolve,reject)=>{
+			redisDB
+				.hget('auth:'+token, 'implementation')
+				.then((implData,err) => {
+					console.log(implData)
+					implData = JSON.parse(implData)
+					if(err) return reject(err)
+					if(_.isEmpty(implData)) {
+						reject("Error al recuperar información de la sesión")
+					}
+					Rol.findAll({
+						attributes: ['id', 'name']
+					,	where: {
+							idImplementation: implData.id
+						}
+					}).then((resultData) => {
+						resultData = _.map(
+							resultData
+						,	function(rol) {
+								return rol.dataValues
+							}
+						)
+						console.log(resultData)
+						resolve(resultData)
+					}, 	(errRol) => {
+						reject(errRol)
+					})
+				});
+		});
 	}
 }

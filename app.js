@@ -32,7 +32,7 @@ app.get('/status',(req,res,next)=>{
 	res.send('ready')
 });
 
-var routesArr = ["auth","porpose","node","cicle","stage","person","user","action"]
+var routesArr = ["auth","porpose","node","cicle","stage","person","user","action","implementation","rol"]
 
 for(var x = 0; routesArr.length > x; x++) {
 	require("./routes/" + routesArr[x])(app);
