@@ -1,6 +1,4 @@
 const model = require('./Model');
-const Auth = require('./auth');
-// const Rol = require('./rol');
 const redis = require("../lib/redis"); //Manipulador de la conexión de la BD
 var redisDB = new redis(model.config.redis_connect);
 

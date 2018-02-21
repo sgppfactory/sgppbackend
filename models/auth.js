@@ -3,6 +3,7 @@ const md5 = require('crypto-js/md5');
 const model = require("./Model");
 const Rol = require("./rol");
 const Person = require("./person");
+const User = require("./user");
 const Action = require("./action");
 const Impl = require("./implementation");
 const redis = require("../lib/redis"); //Manipulador de la conexión de la BD
@@ -10,43 +11,45 @@ var redisDB = new redis(model.config.redis_connect);
 // var mysqlDB = new mysql(config.mysql_connect);
 RolInstance = Rol.getModel()
 ActionInstance = Action.getModel()
-PersonInstance = Person.getModel()
+UserInstance = User.getModel()
+// PersonInstance = Person.getModel()
+// PersonInstance = Person.Person
 
-Mod = model.dbsql.define('user', {
-	username: model.cte.STRING,
-	password: model.cte.STRING,
-	firstLogin: {type:model.cte.BOOLEAN, field: 'first_login' },
-	idPerson: {
-		type:model.cte.INTEGER
-	, 	field: 'id_person' 
-	,	references: {
-			model: PersonInstance
-		,	key: 'id'
-		}
-	}
-,	idRol: {
-		type:model.cte.INTEGER
-	, 	field: 'id_rol'
-	,	references: {
-			model: RolInstance
-		,	key: 'id'
-		} 
-	}
-},{
-	tableName: 'user'
-,	timestamps: false
-,	updatedAt : false
-,	createdAt : 'create_time'
-})
+// const User = model.dbsql.define('user', {
+// 	username: model.cte.STRING,
+// 	password: model.cte.STRING,
+// 	firstLogin: {type:model.cte.BOOLEAN, field: 'first_login' },
+// 	idPerson: {
+// 		type:model.cte.INTEGER
+// 	, 	field: 'id_person' 
+// 	,	references: {
+// 			model: PersonInstance
+// 		,	key: 'id'
+// 		}
+// 	}
+// ,	idRol: {
+// 		type:model.cte.INTEGER
+// 	, 	field: 'id_rol'
+// 	,	references: {
+// 			model: RolInstance
+// 		,	key: 'id'
+// 		} 
+// 	}
+// },{
+// 	tableName: 'user'
+// ,	timestamps: false
+// ,	updatedAt : false
+// ,	createdAt : 'create_time'
+// })
 
-Auditory = model.dbsql.define('user_auditory', {
+const Auditory = model.dbsql.define('user_auditory', {
 	ip: model.cte.STRING,
 	dateHour: model.cte.DATE,
 	idUser: {
 		type:model.cte.INTEGER
 	, 	field: 'id_user' 
 	,	references: {
-			model: Mod
+			model: UserInstance
 		,	key: 'id'
 		}
 	}
@@ -57,7 +60,7 @@ Auditory = model.dbsql.define('user_auditory', {
 ,	createdAt : false
 })
 
-ActionRol = model.dbsql.define('action_rol', {
+const ActionRol = model.dbsql.define('action_rol', {
 	idAction: {
 		type:model.cte.INTEGER
 	, 	field: 'id_action' 
@@ -85,9 +88,9 @@ ActionRol = model.dbsql.define('action_rol', {
 // User.belongsTo(RolInstance, {foreignKey: 'fk_rol_user'});
 
 // RolInstance.hasMany(ActionRol, {sourceKey: 'id_rol', foreignKey: 'id_rol', as: 'actr'})
-// Mod.hasMany(ActionRol, {foreignKey: 'id_rol', sourceKey: 'id_rol', as: 'actionsRol'})
-RolInstance.hasOne(Mod, {foreignKey: 'id_rol', sourceKey: 'id'});
-// Mod.belongsTo(RolInstance, {foreignKey: 'id_rol'})
+// User.hasMany(ActionRol, {foreignKey: 'id_rol', sourceKey: 'id_rol', as: 'actionsRol'})
+RolInstance.hasOne(UserInstance, {foreignKey: 'id_rol', sourceKey: 'id'});
+// User.belongsTo(RolInstance, {foreignKey: 'id_rol'})
 RolInstance.belongsToMany(ActionInstance, { through: {model: ActionRol}, foreignKey: 'id_rol'});
 ActionInstance.belongsToMany(RolInstance, { through: {model: ActionRol}, foreignKey: 'id_action'});
 // RolInstance.hasMany(ActionRol, {foreignKey: 'fk_action_action_rol', as: 'actionsRol'})
@@ -98,7 +101,7 @@ module.exports = {
 	login: (userParams) => {
 		// console.log(md5(userParams.username).toString())
 		if(_.isString(userParams.username) && _.isString(userParams.password)) {
-			return Mod.findOne({
+			return UserInstance.findOne({
 				attributes: ['id', 'username', 'avatar']
 			,	where: {
 					username: userParams.username
@@ -112,7 +115,7 @@ module.exports = {
 			reject("Parámetros no válidos");
 		});
 	}
-,	saveSession: (token,userdata,payload,ip) => {
+,	saveSession: (token, userdata, payload, ip) => {
 		// var redisDB = new redis(config.redis_connect);
 		return new Promise((resolve,reject)=>{
 			ActionInstance.findAll({
@@ -121,7 +124,7 @@ module.exports = {
 					model: RolInstance
 				, 	attributes:['id','idImplementation']
 				, 	include:[{
-						model: Mod
+						model: UserInstance
 					,	where: {id : userdata.id}
 					,	attributes: ['id']
 					}]
@@ -189,7 +192,8 @@ module.exports = {
 				});
 		});
 	}
-,	getModel: () => {
-		return Mod
-	}
 }
+
+// module.exports.User = User
+// module.exports.ActionRol = ActionRol
+// module.exports.UserAuditory = Auditory

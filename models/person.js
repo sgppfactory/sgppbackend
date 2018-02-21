@@ -1,24 +1,23 @@
-model = require('./Model');
-const search = require('../lib/search');
-const user = require('./auth');
-const md5 = require('crypto-js/md5'); 
 _ = require('underscore');
+const md5 = require('crypto-js/md5'); 
 const nodemailer = require('nodemailer');
+const model = require('./Model');
+const user = require('./user');
+const search = require('../lib/search');
 
 var transporter = nodemailer.createTransport({
-	service: 'gmail',
-	auth: {
-		user: 'franco.soto.z@gmail.com',
-		pass: 'simco2016cotiave'
-	}
+	service: 	'gmail',
+	auth: 		model.config.mail_connect
 })
 
 var mailOptions = {
-	from: 'franco.soto.z@gmail.com',
-	subject: 'Creación de usuario para SGPP'
+	from: 		model.config.mail_connect.from,
+	subject: 	'Creación de usuario para SGPP'
 }
 
 var htmlBody = '<h3>Bienvenidos al sistema de gestión de Presupuestos Participativos</h3><p>A partir de ahora, puede ingresar al sistema con la siguiente credencial.</p><p><b>Usuario: {{username}}</b></p><p><b>Contraseña: {{pass}}</b></p><p>Recuerde que puede cambiar su contraseña una vez ingresado al sistema.</p>'
+
+UserInstance = user.getModel();
 
 const Person =  model.dbsql.define('person',{
 		id: { 
@@ -119,24 +118,29 @@ const Person =  model.dbsql.define('person',{
 )
 
 module.exports = {
-	getModel : () => {
-		return Person
-	}
-,	create : params => {
-		return Promise((resolve, reject) => {
-			Person.create(params)
-				.then((result) => {
-					console.log(result)
-					if (params.withuser) {
-						password = Math.random() * Date.now()
-						user.getModel().create({
-							username: params.email
-						,	password: md5(password).toString()
-						,	idRol: params.rol
-						,	firstLogin: false
-						,	idPerson: result.person
-						}).then((result) => {
-							transporter.sendMail(
+	create : params => {
+		// return new Promise((resolve, reject) => {
+		return model.dbsql.transaction((t) => {
+			return Person.create({
+				name: 		params.name
+			,	lastname: 	params.lastname
+			,	email: 		params.email
+			,	tel: 		params.tel
+			,	cel: 		params.cel
+			,	location: 	params.location
+			,	dateBirth: 	params.dateBirth
+			}, {transaction: t}).then((resultPerson) => {
+				if (params.withuser == 'true') {
+					password = Math.random() * Date.now()
+					return UserInstance.create({
+						username: params.email
+					,	password: md5(password).toString()
+					,	idRol: params.rol
+					,	firstLogin: false
+					,	idPerson: resultPerson.get('id')
+					}, {transaction: t}).then((resultUser) => {
+						return new Promise((resolve, reject) => {
+							return transporter.sendMail(
 								_.extend(
 									mailOptions
 								,	{
@@ -148,22 +152,31 @@ module.exports = {
 								)
 							,	(error, info) => {
 									if(error) {
-										resolve(result)
+										throw new Error("No se pudo enviar el mail");
 									} else {
-										reject(error)
+										resolve(resultPerson.get('id'))
 									}
 								}
 							)
-						}, (err) => {
-							reject(err)
 						})
-					} else {
-						resolve(result)
-					}
-				}, (err) => {
-					reject(err)
+					}, (err) => {
+						throw new Error(err);
+					})
+				} 
+				return new Promise((resolve, reject) => {
+					resolve(resultPerson.get('id'))
 				})
+			}, (err) => {
+				throw new Error(err);
+			})
 		})
+
+			// .then( (result) => {
+			// 	resolve(result)
+			// }).catch( (error) => {
+			// 	reject(error)
+			// })
+		// })
 	}
 ,	get: id => {
 		return Person.findById(id)
@@ -196,3 +209,5 @@ module.exports = {
 		})
 	}
 }
+
+module.exports.Person = Person

@@ -1,5 +1,4 @@
-const model = require('../models/auth');
-// const modelUser = require('../models/user');
+const authmodel = require('../models/auth');
 const authLib = require("../lib/auth"); //Librería para manejar la autenticación
 
 UserRoute = function(app){
@@ -17,8 +16,7 @@ UserRoute = function(app){
 	 *        - application/json
 	 */
 	app.get('/user',authLib.ensureAuthenticated, function(req, res, next) {
-		// console.log('Request URL: '+req.method+' /user');
-		model
+		authmodel
 			.getUserBySession(req.token)
 			.then((result) => {
 				// console.log("noerror", result)

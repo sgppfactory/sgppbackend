@@ -1,6 +1,5 @@
-const model = require('../models/auth');
+const authmodel = require('../models/auth');
 const authLib = require("../lib/auth"); //Librería para manejar la autenticación
-
 /**
  * @swagger
  * resourcePath: /api
@@ -32,7 +31,7 @@ module.exports = function(app){
 	 *          dataType: string
 	 */
 	app.post('/auth', function(req, res, next) {
-		model
+		authmodel
 			.login(req.body)
 			.then((result) => {
 				if(result) {
@@ -40,7 +39,7 @@ module.exports = function(app){
 					var token = authLib.generateToken(JSON.stringify(result.dataValues));
 					var payload = authLib.getPayload(token)
 					
-					model
+					authmodel
 						.saveSession(token, result.dataValues, payload, req.connection.remoteAddress)
 						.then(
 							(resultRedis) => {

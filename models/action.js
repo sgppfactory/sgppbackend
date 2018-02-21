@@ -76,13 +76,6 @@ module.exports = {
 	getModel : () => {
 		return Action
 	}
-// ,	create :(params) => {
-// 		try {
-// 			return Cicle.create(params)
-// 		}catch(err) {
-// 			console.log(err)
-// 		}
-// 	}
 ,	get: (id) => {
 		return Action.findOne(id)
 	}
@@ -99,3 +92,5 @@ module.exports = {
 		return redisDB.hget('auth:'+token, "actions")
 	}
 }
+
+module.exports.Action = Action

@@ -46,7 +46,7 @@ module.exports = {
 			redisDB
 				.hget('auth:'+token, 'implementation')
 				.then((implData,err) => {
-					console.log(implData)
+					// console.log(implData)
 					implData = JSON.parse(implData)
 					if(err) return reject(err)
 					if(_.isEmpty(implData)) {
@@ -64,7 +64,7 @@ module.exports = {
 								return rol.dataValues
 							}
 						)
-						console.log(resultData)
+						// console.log(resultData)
 						resolve(resultData)
 					}, 	(errRol) => {
 						reject(errRol)
@@ -73,3 +73,5 @@ module.exports = {
 		});
 	}
 }
+
+module.exports.Rol = Rol
