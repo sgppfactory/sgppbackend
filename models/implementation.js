@@ -1,5 +1,6 @@
 const model = require('./Model');
 const redis = require("../lib/redis"); //Manipulador de la conexión de la BD
+const Node = require('./node');
 var redisDB = new redis(model.config.redis_connect);
 
 const Implementation =  model.dbsql.define('implementation',{
@@ -70,13 +71,13 @@ module.exports = {
 		return new Promise((resolve,reject)=>{
 			redisDB
 				.hget('auth:'+token, 'implementation')
-				.then((result,err) => {
+				.then((result, err) => {
 					if(err) return reject(err)
 					resolve(result)
 				});
 		});
 	}
-,	findBy: (params) => {
+,	findBy: params => {
 		// filter:[{key:,value:,operator:}]
 		// filter = {}
 		// if(params.filters) {
@@ -84,5 +85,27 @@ module.exports = {
 		// }
 		// return PorposalProject.findAll(filter)
 		return Implementation.findAll()
+	}
+,	structures: token => {
+		return new Promise((resolve, reject) => {
+			redisDB
+				.hget('auth:'+token, 'implementation')
+				.then((result, err) => {
+					if(err) reject(err)
+
+					result = JSON.parse(result)
+
+					Node.getModel().findAll({
+						attributes: ['id', 'id_parent_node', 'name', 'description', 'amount']
+					,	where: {
+							[model.Op.and]: [{id_implementation: result.id}, {active: true}]
+						}
+					}).then((result, err) => {
+						console.log(result)
+						if(err) reject(err)
+						resolve(result)
+					})
+				})
+		})
 	}
 }
