@@ -59,4 +59,33 @@ module.exports = function(app) {
 				res.json({"message":err,"status":"error"})
 			})
 	});
+
+	/**
+	 * @swagger
+	 * path: /implementation
+	 * operations:
+	 *   -  httpMethod: POST
+	 *      summary: Crear toda la estructura de implementación
+	 *      notes: Se le pasa información de los nodos, stages y la apliación a crear
+	 *      responseClass: Implementation
+	 *      nickname: implementation
+	 *      consumes: 
+	 *        - application/json
+	 */
+	app.post('/implementation',authLib.ensureAuthenticated, function(req, res, next) {
+		model
+			.create(req.params)
+			.then((result) => {
+				if(result) {
+					res.statusCode = 200
+					res.json({"message":result,"status":"OK"})
+				} else {
+					res.statusCode = 403
+					res.json({"msg":"Implementation inexistente","status":"error"})
+				}
+			},(err) => {
+				res.statusCode = 409
+				res.json({"message":err,"status":"error"})
+			})
+	});
 }
