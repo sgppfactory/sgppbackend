@@ -48,7 +48,7 @@ const Stage =  model.dbsql.define('stage',{
 			}
 		}
 	,	active : {
-			type: model.cte.FLOAT
+			type: model.cte.BOOLEAN
 		,	defaultValue : true
 		}
 	},{
@@ -64,8 +64,7 @@ module.exports = {
 ,	create :(params) => {
 		try {
 			return Stage.create(params)
-		}catch(err) {
-			console.log(err)
+		} catch(err) {
 			return new Promise((resolve, reject)=>{
 				reject(err)
 			})

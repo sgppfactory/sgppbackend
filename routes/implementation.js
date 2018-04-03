@@ -72,16 +72,16 @@ module.exports = function(app) {
 	 *      consumes: 
 	 *        - application/json
 	 */
-	app.post('/implementation',authLib.ensureAuthenticated, function(req, res, next) {
+	app.post('/implementation', authLib.ensureAuthenticated, function(req, res, next) {
 		model
-			.create(req.params)
+			.create(req.params, req.token)
 			.then((result) => {
 				if(result) {
 					res.statusCode = 200
 					res.json({"message":result,"status":"OK"})
 				} else {
 					res.statusCode = 403
-					res.json({"msg":"Implementation inexistente","status":"error"})
+					res.json({"msg":"Error al crear la configuración", "status":"error"})
 				}
 			},(err) => {
 				res.statusCode = 409

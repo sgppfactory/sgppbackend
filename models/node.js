@@ -63,6 +63,16 @@ const Node =  model.dbsql.define('node',{
 				}
 			}
 		}
+	,	idImplementation : {
+			type: model.cte.INTEGER
+		, 	allowNull: false
+		, 	field: 'id_implementation'
+		,	validate : {
+				isInt: {
+					msg: "Referencia de Implementación incorrecta"
+				}
+			}
+		}
 	},{
 		tableName: 'node'
 	,	timestamps: false

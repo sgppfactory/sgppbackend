@@ -1,6 +1,7 @@
 const model = require('./Model');
 const redis = require("../lib/redis"); //Manipulador de la conexión de la BD
 const Node = require('./node');
+const Stage = require('./stage');
 var redisDB = new redis(model.config.redis_connect);
 
 const Implementation =  model.dbsql.define('implementation',{
@@ -50,9 +51,70 @@ module.exports = {
 	getModel : () => {
 		return Implementation
 	}
-,	create: params => {
+,	create: (params, token) => {
 		try {
-			return Implementation.create(params)
+			return model.dbsql.transaction((t) => {
+				redisDB
+					.hget('auth:'+token, 'implementation')
+					.then((impldata, err) => {
+						if (err) 
+							throw "Error al obtener datos de sesión"
+
+						console.log(params.appdata, result)
+						
+						let appdata = JSON.parse(params.appdata)
+						impldata = JSON.parse(impldata)
+
+						return Node.create(
+							_.extend(
+								appdata
+							,	{idImplementation: impldata.id}
+							)
+						, 	{transaction: t}).then((resultImpl) => {
+							let stages = JSON.parse(params.stages)
+							let nodes = JSON.parse(params.nodes)
+
+							if (stages.length < 2) {
+								throw "Cantidad de etapas incorrectos"
+							}
+							if (nodes.length < 1) {
+								throw "Cantidad de nodos incorrectos"
+							}
+							console.log(nodes,resultImpl)
+							// nodesOrder  = []
+							// _.each(nodes, (nodeF) => {
+							// 	nodesOrder.push(nodeF)
+							// 	if (!nodeF.iscicle) {
+							// 		nodesOrder = nodesOrder.concat(this.findNodes(groupNodes, nodeF, 1))
+							// 	}
+							// })
+
+							let nodesByGroup = _.groupBy(nodes, 'level')
+							console.log(nodesByGroup)
+							if (!nodesByGroup[0]) {
+								throw "No hay nodos de nivel 0"
+							}
+							_.each(nodesByGroup[0], (node, index) => {
+								Node.create(_.extend(
+									node
+								,	{idImplementation: impldata.id}
+								), {transaction: t}).then((node_result) => {
+									console.log("node_result", node_result)
+									// node_result.add
+								})
+							})
+
+							_.each(stages, (stage, index) => {
+								Stage.create(stage, {transaction: t})
+							})
+
+							// nodes childrens
+							// _.each(stages, (stage, index) => {
+							// 	Stage.create(stage, {transaction: t})
+							// })
+						})
+					});
+			})
 		}catch(err) {
 			return new Promise((resolve, reject)=>{
 				reject(err)
