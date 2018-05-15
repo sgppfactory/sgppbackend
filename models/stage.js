@@ -26,9 +26,10 @@ const Stage =  model.dbsql.define('stage',{
 				}
 			}
 		}
-	,	date_init : {
+	,	dateInit : {
 			type: model.cte.DATE
 		, 	allowNull: false
+		, 	field: 'date_init'
 		, 	validate: {
 				notNull: {
 					msg: "La fecha de comienzo es requerida"
@@ -62,6 +63,7 @@ module.exports = {
 		return Stage
 	}
 ,	create :(params) => {
+	console.log(params)
 		try {
 			return Stage.create(params)
 		} catch(err) {

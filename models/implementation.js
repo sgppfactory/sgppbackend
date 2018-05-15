@@ -47,6 +47,31 @@ const Implementation =  model.dbsql.define('implementation',{
 	}
 )
 
+//Función recursiva
+function createNode(nodesByGroup, t, implementationId, idParentNode, level, childrens) {
+	return _.each(childrens, (nodeGB, index) => {
+		objectToSave = _.clone(nodeGB)
+		if(objectToSave.amount == '') {
+			delete objectToSave.amount
+		}
+		delete objectToSave.id
+		return Node.create(_.extend(
+			objectToSave
+		,	{ idImplementation: implementationId, idParentNode: idParentNode }
+		), {transaction: t}).then((node_result, err) => {
+			if(err) return err
+			child = _.filter(nodesByGroup[level + 1], (obj)=>{
+				console.log("find",obj.fatherNode, nodeGB.id)
+				return obj.fatherNode === nodeGB.id
+			})
+			console.log("hijos",childrens)
+			if(child && child.length > 0) {
+				createNode(nodesByGroup, t, implementationId, node_result.dataValues.id, level + 1, child)
+			}
+		})
+	})
+}
+
 module.exports = {
 	getModel : () => {
 		return Implementation
@@ -54,17 +79,17 @@ module.exports = {
 ,	create: (params, token) => {
 		try {
 			return model.dbsql.transaction((t) => {
-				redisDB
+				return redisDB
 					.hget('auth:'+token, 'implementation')
 					.then((impldata, err) => {
-						if (err) 
+						if (err) {
 							throw "Error al obtener datos de sesión"
+						}
 
-						console.log(params.appdata, result)
-						
 						let appdata = JSON.parse(params.appdata)
 						impldata = JSON.parse(impldata)
 
+						// console.log(params.appdata, impldata)
 						return Node.create(
 							_.extend(
 								appdata
@@ -75,47 +100,34 @@ module.exports = {
 							let nodes = JSON.parse(params.nodes)
 
 							if (stages.length < 2) {
-								throw "Cantidad de etapas incorrectos"
+								throw "Cantidad de etapas incorrectas"
 							}
 							if (nodes.length < 1) {
 								throw "Cantidad de nodos incorrectos"
 							}
-							console.log(nodes,resultImpl)
-							// nodesOrder  = []
-							// _.each(nodes, (nodeF) => {
-							// 	nodesOrder.push(nodeF)
-							// 	if (!nodeF.iscicle) {
-							// 		nodesOrder = nodesOrder.concat(this.findNodes(groupNodes, nodeF, 1))
-							// 	}
-							// })
 
 							let nodesByGroup = _.groupBy(nodes, 'level')
-							console.log(nodesByGroup)
+							// console.log(nodesByGroup)
 							if (!nodesByGroup[0]) {
-								throw "No hay nodos de nivel 0"
+								throw "No hay nodos de pimer nivel"
 							}
-							_.each(nodesByGroup[0], (node, index) => {
-								Node.create(_.extend(
-									node
-								,	{idImplementation: impldata.id}
-								), {transaction: t}).then((node_result) => {
-									console.log("node_result", node_result)
-									// node_result.add
-								})
-							})
+							// var nodesId = []
+
+							createNode(nodesByGroup, t, impldata.id, resultImpl.dataValues.id, 0, nodesByGroup[0])
 
 							_.each(stages, (stage, index) => {
+								console.log(stage)
+								// TODO: Setear isproject como booleano
+								stage.isproject = stage.isproject === 'true'
 								Stage.create(stage, {transaction: t})
+									.then((ok, err) => {
+										// console.log(ok,err)
+									})
 							})
-
-							// nodes childrens
-							// _.each(stages, (stage, index) => {
-							// 	Stage.create(stage, {transaction: t})
-							// })
 						})
 					});
 			})
-		}catch(err) {
+		} catch(err) {
 			return new Promise((resolve, reject)=>{
 				reject(err)
 			})
