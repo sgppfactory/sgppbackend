@@ -77,8 +77,8 @@ module.exports = function(app) {
 			.create(req.params, req.token)
 			.then((result) => {
 				if(result) {
-					res.statusCode = 200
-					res.json({"message":result,"status":"OK"})
+					res.statusCode = 201
+					res.json({"message":"Estructura creada correctamente","status":"OK"})
 				} else {
 					res.statusCode = 403
 					res.json({"msg":"Error al crear la configuración", "status":"error"})

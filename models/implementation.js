@@ -49,25 +49,35 @@ const Implementation =  model.dbsql.define('implementation',{
 
 //Función recursiva
 function createNode(nodesByGroup, t, implementationId, idParentNode, level, childrens) {
-	return _.each(childrens, (nodeGB, index) => {
+	_.each(childrens, (nodeGB, index) => {
 		objectToSave = _.clone(nodeGB)
 		if(objectToSave.amount == '') {
 			delete objectToSave.amount
 		}
+
 		delete objectToSave.id
-		return Node.create(_.extend(
+
+		Node.create(_.extend(
 			objectToSave
 		,	{ idImplementation: implementationId, idParentNode: idParentNode }
-		), {transaction: t}).then((node_result, err) => {
-			if(err) return err
+		), {transaction: t}).then((node_result) => {
 			child = _.filter(nodesByGroup[level + 1], (obj)=>{
-				console.log("find",obj.fatherNode, nodeGB.id)
+				// console.log("find",obj.fatherNode, nodeGB.id)
 				return obj.fatherNode === nodeGB.id
 			})
-			console.log("hijos",childrens)
+			// console.log("hijos",childrens)
 			if(child && child.length > 0) {
-				createNode(nodesByGroup, t, implementationId, node_result.dataValues.id, level + 1, child)
+				createNode(
+					nodesByGroup
+				, 	t
+				, 	implementationId
+				, 	node_result.dataValues.id
+				, 	level + 1
+				, 	child
+				)
 			}
+		}).catch((error) => {
+			t.rollback()
 		})
 	})
 }
@@ -77,7 +87,7 @@ module.exports = {
 		return Implementation
 	}
 ,	create: (params, token) => {
-		try {
+		return new Promise((resolve, reject) => {
 			return model.dbsql.transaction((t) => {
 				return redisDB
 					.hget('auth:'+token, 'implementation')
@@ -89,49 +99,55 @@ module.exports = {
 						let appdata = JSON.parse(params.appdata)
 						impldata = JSON.parse(impldata)
 
-						// console.log(params.appdata, impldata)
 						return Node.create(
-							_.extend(
-								appdata
-							,	{idImplementation: impldata.id}
-							)
-						, 	{transaction: t}).then((resultImpl) => {
-							let stages = JSON.parse(params.stages)
-							let nodes = JSON.parse(params.nodes)
+								_.extend(
+									appdata
+								,	{idImplementation: impldata.id}
+								)
+							, 	{transaction: t}
+							).then((resultImpl) => {
+								let stages = JSON.parse(params.stages)
+								let nodes = JSON.parse(params.nodes)
 
-							if (stages.length < 2) {
-								throw "Cantidad de etapas incorrectas"
-							}
-							if (nodes.length < 1) {
-								throw "Cantidad de nodos incorrectos"
-							}
+								if (stages.length < 2) {
+									throw "Cantidad de etapas incorrectas"
+								}
+								if (nodes.length < 1) {
+									throw "Cantidad de nodos incorrectos"
+								}
 
-							let nodesByGroup = _.groupBy(nodes, 'level')
-							// console.log(nodesByGroup)
-							if (!nodesByGroup[0]) {
-								throw "No hay nodos de pimer nivel"
-							}
-							// var nodesId = []
+								let nodesByGroup = _.groupBy(nodes, 'level')
+								
+								if (!nodesByGroup[0]) {
+									throw "No hay nodos de primer nivel"
+								}
 
-							createNode(nodesByGroup, t, impldata.id, resultImpl.dataValues.id, 0, nodesByGroup[0])
+								createNode(
+									nodesByGroup
+								, 	t
+								, 	impldata.id
+								, 	resultImpl.dataValues.id
+								, 	0
+								, 	nodesByGroup[0]
+								)
 
-							_.each(stages, (stage, index) => {
-								console.log(stage)
-								// TODO: Setear isproject como booleano
-								stage.isproject = stage.isproject === 'true'
-								Stage.create(stage, {transaction: t})
-									.then((ok, err) => {
-										// console.log(ok,err)
-									})
+								return _.every(stages, (stage, index) => {
+									stage.isproject = stage.isproject === 'true'
+									console.log(stage)
+									return Stage.create(stage, {transaction: t})
+								});
+							}).then((ok) => {
+								// creo que acá tengo que tirar la onda
+								t.commit();
+								resolve(ok);
+							}).catch((err) => {
+								console.log(err)
+								t.rollback();
+								reject(err)
 							})
-						})
-					});
+					})
 			})
-		} catch(err) {
-			return new Promise((resolve, reject)=>{
-				reject(err)
-			})
-		}
+		})
 	}
 ,	get: id => {
 		return Implementation.find({
