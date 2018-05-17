@@ -65,11 +65,14 @@ module.exports = {
 		return Task
 	}
 ,	create :params => {
-		try {
-			return Task.create(params)
-		}catch(err) {
-			console.log(err)
-		}
+		return new Promise((resolve, reject) => {
+			Task.create(params)
+				.then((stage) => {
+					resolve(stage)
+				}).catch((err) => {
+					reject(err)
+				})
+		})
 	}
 ,	get: id => {
 		return Task.findById(id)

@@ -64,13 +64,6 @@ module.exports = {
 	}
 ,	create :(params) => {
 		console.log(params)
-		// try {
-		// 	return Stage.create(params)
-		// } catch(err) {
-		// 	return new Promise((resolve, reject)=>{
-		// 		reject(err)
-		// 	})
-		// }
 		return new Promise((resolve, reject) => {
 			Stage.create(params)
 				.then((stage) => {

@@ -53,14 +53,14 @@ module.exports = {
 		return Report
 	}
 ,	create :params => {
-		try {
-			return Report.create(params)
-		}catch(err) {
-			console.log(err)
-			return new Promise((resolve, reject)=>{
-				reject(err)
-			})
-		}
+		return new Promise((resolve, reject) => {
+			Report.create(params)
+				.then((stage) => {
+					resolve(stage)
+				}).catch((err) => {
+					reject(err)
+				})
+		})
 	}
 ,	get: id => {
 		return Report.findOne(id)
