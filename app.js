@@ -38,7 +38,7 @@ for(var x = 0; routesArr.length > x; x++) {
 	require("./routes/" + routesArr[x])(app);
 }
 
-app.listen(3000,'127.0.0.1', () => {
+app.listen(3000,'0.0.0.0', () => {
   	console.log('Server "%s" escuchando a la URI %s',app.name,app.url);
   	// debug('Server escuchando el puerto 3000 al server %s',app.url)
 });
