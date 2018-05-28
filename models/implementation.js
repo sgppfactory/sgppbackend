@@ -47,9 +47,47 @@ const Implementation =  model.dbsql.define('implementation',{
 	}
 )
 
+
+NodeStage = model.dbsql.define('node_stage',{
+	idNode : {
+		type: model.cte.INTEGER
+	,	primaryKey: true
+	, 	field: 'id_node'
+	, 	allowNull: false
+	,	references: {
+			model: Node
+		,	key: 'id'
+		}
+	,	validate: {
+			isInt : {
+				msg: "El campo nodo es incorrecto"
+			}
+		}
+	},
+	idStage : {
+		type: model.cte.INTEGER
+	, 	field: 'id_stage'
+	,	primaryKey: true
+	, 	allowNull: false
+	,	references: {
+			model: Stage
+		,	key: 'id'
+		}
+	,	validate: {
+			isInt : {
+				msg: "El campo de etapa es incorrecto"
+			}
+		}
+	}
+}, {
+	tableName: 'node_stage'
+,	timestamps: false
+})
+
 //Función recursiva
 function createNode(nodesByGroup, t, implementationId, idParentNode, level, childrens) {
-	_.each(childrens, (nodeGB, index) => {
+	// return _.each(childrens, (nodeGB, index) => {
+	return model.dbsql.Promise.map(childrens, (nodeGB) => {
 		objectToSave = _.clone(nodeGB)
 		if(objectToSave.amount == '') {
 			delete objectToSave.amount
@@ -57,17 +95,17 @@ function createNode(nodesByGroup, t, implementationId, idParentNode, level, chil
 
 		delete objectToSave.id
 
-		Node.create(_.extend(
+		return Node.create(_.extend(
 			objectToSave
 		,	{ idImplementation: implementationId, idParentNode: idParentNode }
-		), {transaction: t}).then((node_result) => {
+		), {transaction: t})
+		.then((node_result) => {
 			child = _.filter(nodesByGroup[level + 1], (obj)=>{
-				// console.log("find",obj.fatherNode, nodeGB.id)
 				return obj.fatherNode === nodeGB.id
 			})
-			// console.log("hijos",childrens)
+
 			if(child && child.length > 0) {
-				createNode(
+				return createNode(
 					nodesByGroup
 				, 	t
 				, 	implementationId
@@ -75,24 +113,52 @@ function createNode(nodesByGroup, t, implementationId, idParentNode, level, chil
 				, 	level + 1
 				, 	child
 				)
+			} else {
+				return node_result.dataValues
 			}
 		}).catch((error) => {
+			// console.log(error)
 			t.rollback()
+			return error
 		})
 	})
 }
+
+function getAllNodesIDChildrens (nodes) {
+	console.log("filtrar nodos",_.filter(nodes, (node) => {
+		return node.cicle 
+	}))
+	return _.map(_.filter(nodes, (node) => {
+		return node.cicle 
+	}), (nodeB) => {
+		return nodeB.id
+	})
+}
+
+function changeDate (latinDate) {
+	var dma = latinDate.split('/')
+  	if (dma.length === 3) {
+  		return dma[2] + '-' + dma[1] + '-' + dma[0]	
+  	} else if (dma.length === 2) {
+		let year = (new Date()).getFullYear()
+  		return year + '-' + dma[1] + '-' + dma[0]	
+  	} else {
+  		return latinDate
+  	}
+}
+
 
 module.exports = {
 	getModel : () => {
 		return Implementation
 	}
 ,	create: (params, token) => {
-		return new Promise((resolve, reject) => {
+		// return new Promise((resolve, reject) => {
 			return model.dbsql.transaction((t) => {
 				return redisDB
 					.hget('auth:'+token, 'implementation')
-					.then((impldata, err) => {
-						if (err) {
+					.then((impldata) => {
+						if (!impldata) {
 							throw "Error al obtener datos de sesión"
 						}
 
@@ -106,12 +172,7 @@ module.exports = {
 								)
 							, 	{transaction: t}
 							).then((resultImpl) => {
-								let stages = JSON.parse(params.stages)
 								let nodes = JSON.parse(params.nodes)
-
-								if (stages.length < 2) {
-									throw "Cantidad de etapas incorrectas"
-								}
 								if (nodes.length < 1) {
 									throw "Cantidad de nodos incorrectos"
 								}
@@ -122,7 +183,11 @@ module.exports = {
 									throw "No hay nodos de primer nivel"
 								}
 
-								createNode(
+								if (!resultImpl.dataValues) {
+									throw "Error al crear los nodos, inténtelo nuevamente más tarde"
+								}
+
+								return createNode(
 									nodesByGroup
 								, 	t
 								, 	impldata.id
@@ -131,23 +196,66 @@ module.exports = {
 								, 	nodesByGroup[0]
 								)
 
-								return _.every(stages, (stage, index) => {
-									stage.isproject = stage.isproject === 'true'
-									console.log(stage)
+								// nodesChildrens = getAllNodesIDChildrens(nodes)
+								// console.log(nodesChildrens)
+							}).then((nodes) => {
+								nodes = _.flatten(nodes)
+								if (!nodes || nodes.length === 0 ) {
+									throw "Error al crear los nodos, inténtelo nuevamente más tarde"
+								}
+
+								let stages = JSON.parse(params.stages)
+								if (stages.length < 2) {
+									throw "Cantidad de etapas incorrectas"
+								}
+
+								return model.dbsql.Promise.map(stages, (stage) => {
+									stage.isproject = (_.isBoolean(stage.isproject) &&  stage.isproject) 
+										|| stage.isproject === 'true'
+
+									stage.dateInit = changeDate(stage.dateInit)
+
 									return Stage.create(stage, {transaction: t})
-								});
-							}).then((ok) => {
+										.then((stageRet) => {
+											// return _.each(nodesChildrens, (nodeC) => {
+											return model.dbsql.Promise.map(nodes, (nodeC) => { 
+												return NodeStage.create(
+													{idStage: stageRet.id, idNode: nodeC.id}, 
+													{transaction: t}
+												).catch((err) => {
+													t.rollback();
+													// reject(err)
+													return err
+												})
+											})
+										}).catch((err) => {
+											// console.log(err)
+											t.rollback();
+											// reject(err)
+											return err
+										})
+								})
+							}).then((toReturn) => {
 								// creo que acá tengo que tirar la onda
-								t.commit();
-								resolve(ok);
+								// t.commit();
+								// resolve(ok);
+								// console.log("ok",ok)
+								ok = _.flatten(toReturn)
+								return ok.length > 0
 							}).catch((err) => {
-								console.log(err)
+								// console.log("error",err)
 								t.rollback();
-								reject(err)
+								// reject(err)
+								return err
 							})
+					}).catch((err) => {
+						// console.log("error",err)
+						t.rollback();
+						// reject(err)
+						return err
 					})
 			})
-		})
+		// })
 	}
 ,	get: id => {
 		return Implementation.find({
