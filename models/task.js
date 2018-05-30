@@ -1,4 +1,5 @@
 model = require('./Model');
+const search = require('../lib/search');
 
 const Task =  model.dbsql.define('task',{
 		id: { 
@@ -65,25 +66,28 @@ module.exports = {
 		return Task
 	}
 ,	create :params => {
-		return new Promise((resolve, reject) => {
-			Task.create(params)
-				.then((stage) => {
-					resolve(stage)
+		// return new Promise((resolve, reject) => {
+		return Task.create(params)
+				.then((task) => {
+					// resolve(task)
 				}).catch((err) => {
-					reject(err)
+					// reject(err)
 				})
-		})
+		// })
 	}
 ,	get: id => {
 		return Task.findById(id)
 	}
 ,	findAll: params => {
-		// filter:[{key:,value:,operator:}]
-		// filter = {}
-		// if(params.filters) {
-		// 	filter.where = params.filters.map
-		// }
-		// return PorposalProject.findAll(filter)
-		return Task.findAll()
+		let searchObj = new search.Search(params)
+		tosearch = searchObj.getSearch(params)
+		return Task.findAll(tosearch)
+	}
+,	count: params => {
+		let searchObj = new search.Search(params)
+		filter = searchObj.buildFilter(params.filter)
+		return 	Task.count({
+			where: filter
+		})
 	}
 }

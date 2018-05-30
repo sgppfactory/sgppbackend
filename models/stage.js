@@ -64,26 +64,20 @@ module.exports = {
 	}
 ,	create :(params) => {
 		console.log(params)
-		return new Promise((resolve, reject) => {
-			Stage.create(params)
+		// return new Promise((resolve, reject) => {
+		return Stage.create(params)
 				.then((stage) => {
-					resolve(stage)
+					// resolve(stage)
 				}).catch((err) => {
-					reject(err)
+					// reject(err)
 				})
-		})
+		// })
 	}
 ,	get: (id) => {
 		return Stage.findById(id)
 	}
-,	search: (params) => {
-		// filter:[{key:,value:,operator:}]
-		// filter = {}
-		// if(params.filters) {
-		// 	filter.where = params.filters.map
-		// }
-		// return PorposalProject.findAll(filter)
-		return Stage.findAll()
-	}
+// ,	search: (params) => {
+// 		return Stage.findAll()
+// 	}
 }
 

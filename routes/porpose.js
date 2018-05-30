@@ -45,7 +45,7 @@ module.exports = function(app) {
 	 
 	/**
 	 * @swagger
-	 * path: /porpose
+	 * path: /porpose/:id
 	 * operations:
 	 *   -  httpMethod: GET
 	 *      summary: Obtención de datos de un usuario
@@ -56,7 +56,6 @@ module.exports = function(app) {
 	 *        - application/json
 	 */
 	app.get('/porpose/:id',authLib.ensureAuthenticated, function(req, res, next) {
-		console.log(req.params)
 		model
 			.get(req.params.id)
 			.then((result) => {

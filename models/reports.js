@@ -1,4 +1,5 @@
 model = require('./Model');
+const search = require('../lib/search');
 
 const Report =  model.dbsql.define('report',{
 		id: { 
@@ -22,6 +23,7 @@ const Report =  model.dbsql.define('report',{
 	,	idUser : {
 			type: model.cte.INTEGER
 		, 	allowNull: false
+		, 	field: 'id_user'
 		,	validations : {
 				isInt:{
 					msg: "Debe ser un valor entero"
@@ -53,25 +55,34 @@ module.exports = {
 		return Report
 	}
 ,	create :params => {
-		return new Promise((resolve, reject) => {
-			Report.create(params)
-				.then((stage) => {
-					resolve(stage)
-				}).catch((err) => {
-					reject(err)
-				})
-		})
+		// return new Promise((resolve, reject) => {
+		// 	Report.create(params)
+		// 		.then((stage) => {
+		// 			resolve(stage)
+		// 		}).catch((err) => {
+		// 			reject(err)
+		// 		})
+		// })
+		return Report.create(params)
+			.then((stage) => {
+				resolve(stage)
+			}).catch((err) => {
+				reject(err)
+			})
 	}
 ,	get: id => {
 		return Report.findOne(id)
 	}
 ,	findAll: params => {
-		// filter:[{key:,value:,operator:}]
-		// filter = {}
-		// if(params.filters) {
-		// 	filter.where = params.filters.map
-		// }
-		// return PorposalProject.findAll(filter)
-		return Report.findAll()
+		let searchObj = new search.Search(params)
+		tosearch = searchObj.getSearch(params)
+		return Report.findAll(tosearch)
+	}
+,	count: params => {
+		let searchObj = new search.Search(params)
+		filter = searchObj.buildFilter(params.filter)
+		return 	Report.count({
+			where: filter
+		})
 	}
 }

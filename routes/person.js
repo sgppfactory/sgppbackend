@@ -115,8 +115,8 @@ module.exports = app => {
 	 * path: /person
 	 * operations:
 	 *   -  httpMethod: DELETE
-	 *      summary: Obtención de datos de personas
-	 *      notes: Búsqueda de personas
+	 *      summary: Borrado lógico de una persona
+	 *      notes: -
 	 *      responseClass: Person
 	 *      nickname: person
 	 *      consumes: 

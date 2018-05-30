@@ -24,7 +24,7 @@ module.exports = app => {
 	 *          required: true
 	 *          dataType: string
 	 */
-	app.post('/task',authLib.ensureAuthenticated, (req, res, next) => {
+	app.post('/tasks',authLib.ensureAuthenticated, (req, res, next) => {
 		model
 			.create(req.params)
 			.then((result) => {
@@ -53,7 +53,7 @@ module.exports = app => {
 	 *      consumes: 
 	 *        - application/json
 	 */
-	app.get('/task/:id',authLib.ensureAuthenticated, function(req, res, next) {
+	app.get('/tasks/:id',authLib.ensureAuthenticated, function(req, res, next) {
 		model
 			.get(req.params.id)
 			.then((result) => {
@@ -98,15 +98,31 @@ module.exports = app => {
 	 *          required: false
 	 *          dataType: integer
 	 */
-	app.get('/task',authLib.ensureAuthenticated, function(req, res, next) {
+	app.get('/tasks',authLib.ensureAuthenticated, function(req, res, next) {
 		model
-			.get(req.params)
+			.findAll(req.params)
 			.then((result) => {
-				res.statusCode = 200
-				res.json({"message":result,"status":"OK"})
+				model
+					.count(req.params)
+					.then((resultCount) => {
+						if(result) {
+							res.statusCode = 200
+							res.json({
+								"result": result,
+								"total": resultCount,
+								"pages": (req.params.bypage 
+										? 	parseInt(resultCount / req.params.bypage) + 1
+										: 	parseInt(resultCount / 15) + 1 ),
+								"status": "OK"
+							})
+						} else {
+							res.statusCode = 403
+							res.json({"result":[],"status":"error"})
+						}
+					})
 			},(err) => {
 				res.statusCode = 409
-				res.json({"message": err, "status":"error"})
+				res.json({"result": err, "status":"error"})
 			})
 	});
 }
