@@ -1,7 +1,11 @@
 model = require('./Model');
 
 const Stage =  model.dbsql.define('stage',{
-		id: { type: model.cte.INTEGER, primaryKey: true, autoIncrement: true }
+		id: { 
+			type: model.cte.INTEGER
+		, 	primaryKey: true
+		, 	autoIncrement: true 
+		}
 	,	name : {
 			type: model.cte.STRING
 		,	allowNull : false
@@ -64,20 +68,13 @@ module.exports = {
 	}
 ,	create :(params) => {
 		console.log(params)
-		// return new Promise((resolve, reject) => {
 		return Stage.create(params)
-				.then((stage) => {
-					// resolve(stage)
-				}).catch((err) => {
-					// reject(err)
-				})
-		// })
+				// .then((stage) => {
+				// }).catch((err) => {
+				// })
 	}
 ,	get: (id) => {
 		return Stage.findById(id)
 	}
-// ,	search: (params) => {
-// 		return Stage.findAll()
-// 	}
 }
 

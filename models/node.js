@@ -1,4 +1,6 @@
-model = require('./Model');
+const model = require('./Model');
+const NodeStage = require('./nodestage');
+const Stage = require('./stage');
 
 const Node =  model.dbsql.define('node',{
 		id: { 
@@ -96,5 +98,19 @@ module.exports = {
 	}
 ,	get: id => {
 		return Node.findById(id)
+	}
+,	getStagesByNode: (nodeId) => {
+		return NodeStage.findAll({
+			include: [{
+				model: Stage.getModel()
+			, 	attributes:['id', 'name', 'is_project', 'order']
+			,	where: {active: true}
+			}]
+		, 	where: {idNode: nodeId}
+		}).then((toReturn) => {
+			return _.map(toReturn, (obj) => {
+				return obj.dataValues.stage.dataValues
+			})
+		})
 	}
 }

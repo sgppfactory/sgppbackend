@@ -43,7 +43,7 @@ module.exports = app => {
 	 
 	/**
 	 * @swagger
-	 * path: /node
+	 * path: /node/:id
 	 * operations:
 	 *   -  httpMethod: GET
 	 *      summary: Obtención de datos de un nodo por Id de nodo
@@ -63,6 +63,35 @@ module.exports = app => {
 				} else {
 					res.statusCode = 403
 					res.json({"msg":"El nodo solicitado no existe","status":"error"})
+				}
+			},(err) => {
+				res.statusCode = 409
+				res.json({"message": err, "status":"error"})
+			})
+	});
+
+	/**
+	 * @swagger
+	 * path: /node/:id/stages
+	 * operations:
+	 *   -  httpMethod: GET
+	 *      summary: Obtención de datos de un nodo por Id de nodo
+	 *      notes: Retorna información del nodo
+	 *      responseClass: Node
+	 *      nickname: node
+	 *      consumes: 
+	 *        - application/json
+	 */
+	app.get('/node/:id/stages',authLib.ensureAuthenticated, function(req, res, next) {
+		model
+			.getStagesByNode(req.params.id)
+			.then((result) => {
+				if(result) {
+					res.statusCode = 200
+					res.json({"message":result,"status":"OK"})
+				} else {
+					res.statusCode = 403
+					res.json({"msg":"No existen etapas para el nodo solicitado","status":"error"})
 				}
 			},(err) => {
 				res.statusCode = 409

@@ -2,6 +2,7 @@ const model = require('./Model');
 const redis = require("../lib/redis"); //Manipulador de la conexión de la BD
 const Node = require('./node');
 const Stage = require('./stage');
+const NodeStage = require('./nodestage');
 var redisDB = new redis(model.config.redis_connect);
 
 const Implementation =  model.dbsql.define('implementation',{
@@ -48,45 +49,8 @@ const Implementation =  model.dbsql.define('implementation',{
 )
 
 
-NodeStage = model.dbsql.define('node_stage',{
-	idNode : {
-		type: model.cte.INTEGER
-	,	primaryKey: true
-	, 	field: 'id_node'
-	, 	allowNull: false
-	,	references: {
-			model: Node
-		,	key: 'id'
-		}
-	,	validate: {
-			isInt : {
-				msg: "El campo nodo es incorrecto"
-			}
-		}
-	},
-	idStage : {
-		type: model.cte.INTEGER
-	, 	field: 'id_stage'
-	,	primaryKey: true
-	, 	allowNull: false
-	,	references: {
-			model: Stage
-		,	key: 'id'
-		}
-	,	validate: {
-			isInt : {
-				msg: "El campo de etapa es incorrecto"
-			}
-		}
-	}
-}, {
-	tableName: 'node_stage'
-,	timestamps: false
-})
-
 //Función recursiva
 function createNode(nodesByGroup, t, implementationId, idParentNode, level, childrens) {
-	// return _.each(childrens, (nodeGB, index) => {
 	return model.dbsql.Promise.map(childrens, (nodeGB) => {
 		objectToSave = _.clone(nodeGB)
 		if(objectToSave.amount == '') {
@@ -117,21 +81,9 @@ function createNode(nodesByGroup, t, implementationId, idParentNode, level, chil
 				return node_result.dataValues
 			}
 		}).catch((error) => {
-			// console.log(error)
 			t.rollback()
 			return error
 		})
-	})
-}
-
-function getAllNodesIDChildrens (nodes) {
-	console.log("filtrar nodos",_.filter(nodes, (node) => {
-		return node.cicle 
-	}))
-	return _.map(_.filter(nodes, (node) => {
-		return node.cicle 
-	}), (nodeB) => {
-		return nodeB.id
 	})
 }
 
@@ -153,109 +105,97 @@ module.exports = {
 		return Implementation
 	}
 ,	create: (params, token) => {
-		// return new Promise((resolve, reject) => {
-			return model.dbsql.transaction((t) => {
-				return redisDB
-					.hget('auth:'+token, 'implementation')
-					.then((impldata) => {
-						if (!impldata) {
-							throw "Error al obtener datos de sesión"
-						}
+		return model.dbsql.transaction((t) => {
+			return redisDB
+				.hget('auth:'+token, 'implementation')
+				.then((impldata) => {
+					if (!impldata) {
+						throw "Error al obtener datos de sesión"
+					}
 
-						let appdata = JSON.parse(params.appdata)
-						impldata = JSON.parse(impldata)
+					let appdata = JSON.parse(params.appdata)
+					impldata = JSON.parse(impldata)
 
-						return Node.create(
-								_.extend(
-									appdata
-								,	{idImplementation: impldata.id}
-								)
-							, 	{transaction: t}
-							).then((resultImpl) => {
-								let nodes = JSON.parse(params.nodes)
-								if (nodes.length < 1) {
-									throw "Cantidad de nodos incorrectos"
-								}
+					return Node.create(
+							_.extend(
+								appdata
+							,	{idImplementation: impldata.id}
+							)
+						, 	{transaction: t}
+						).then((resultImpl) => {
+							let nodes = JSON.parse(params.nodes)
+							if (nodes.length < 1) {
+								throw "Cantidad de nodos incorrectos"
+							}
 
-								let nodesByGroup = _.groupBy(nodes, 'level')
-								
-								if (!nodesByGroup[0]) {
-									throw "No hay nodos de primer nivel"
-								}
+							let nodesByGroup = _.groupBy(nodes, 'level')
+							
+							if (!nodesByGroup[0]) {
+								throw "No hay nodos de primer nivel"
+							}
 
-								if (!resultImpl.dataValues) {
-									throw "Error al crear los nodos, inténtelo nuevamente más tarde"
-								}
+							if (!resultImpl.dataValues) {
+								throw "Error al crear los nodos, inténtelo nuevamente más tarde"
+							}
 
-								return createNode(
-									nodesByGroup
-								, 	t
-								, 	impldata.id
-								, 	resultImpl.dataValues.id
-								, 	0
-								, 	nodesByGroup[0]
-								)
+							return createNode(
+								nodesByGroup
+							, 	t
+							, 	impldata.id
+							, 	resultImpl.dataValues.id
+							, 	0
+							, 	nodesByGroup[0]
+							)
 
-								// nodesChildrens = getAllNodesIDChildrens(nodes)
-								// console.log(nodesChildrens)
-							}).then((nodes) => {
-								nodes = _.flatten(nodes)
-								if (!nodes || nodes.length === 0 ) {
-									throw "Error al crear los nodos, inténtelo nuevamente más tarde"
-								}
+						}).then((nodes) => {
+							nodes = _.flatten(nodes)
+							if (!nodes || nodes.length === 0 ) {
+								throw "Error al crear los nodos, inténtelo nuevamente más tarde"
+							}
 
-								let stages = JSON.parse(params.stages)
-								if (stages.length < 2) {
-									throw "Cantidad de etapas incorrectas"
-								}
+							let stages = JSON.parse(params.stages)
+							if (stages.length < 2) {
+								throw "Cantidad de etapas incorrectas"
+							}
 
-								return model.dbsql.Promise.map(stages, (stage) => {
-									stage.isproject = (_.isBoolean(stage.isproject) &&  stage.isproject) 
-										|| stage.isproject === 'true'
+							return model.dbsql.Promise.map(stages, (stage) => {
+								stage.isproject = (_.isBoolean(stage.isproject) &&  stage.isproject) 
+									|| stage.isproject === 'true'
 
-									stage.dateInit = changeDate(stage.dateInit)
+								stage.dateInit = changeDate(stage.dateInit)
 
-									return Stage.create(stage, {transaction: t})
-										.then((stageRet) => {
-											// return _.each(nodesChildrens, (nodeC) => {
-											return model.dbsql.Promise.map(nodes, (nodeC) => { 
-												return NodeStage.create(
-													{idStage: stageRet.id, idNode: nodeC.id}, 
-													{transaction: t}
-												).catch((err) => {
-													t.rollback();
-													// reject(err)
-													return err
-												})
+								return Stage.create(stage, {transaction: t})
+									.then((stageRet) => {
+										return model.dbsql.Promise.map(nodes, (nodeC) => { 
+											return NodeStage.create(
+												{idStage: stageRet.id, idNode: nodeC.id}, 
+												{transaction: t}
+											).catch((err) => {
+												t.rollback();
+												return err
 											})
-										}).catch((err) => {
-											// console.log(err)
-											t.rollback();
-											// reject(err)
-											return err
 										})
-								})
-							}).then((toReturn) => {
-								// creo que acá tengo que tirar la onda
-								// t.commit();
-								// resolve(ok);
-								// console.log("ok",ok)
-								ok = _.flatten(toReturn)
-								return ok.length > 0
-							}).catch((err) => {
-								// console.log("error",err)
-								t.rollback();
-								// reject(err)
-								return err
+									}).catch((err) => {
+										t.rollback();
+										return err
+									})
 							})
-					}).catch((err) => {
-						// console.log("error",err)
-						t.rollback();
-						// reject(err)
-						return err
-					})
-			})
-		// })
+						}).then((toReturn) => {
+							// creo que acá tengo que tirar la onda
+							// t.commit();
+							// resolve(ok);
+							// console.log("ok",ok)
+							ok = _.flatten(toReturn)
+							return ok.length > 0
+						}).catch((err) => {
+							t.rollback();
+							return err
+						})
+				}).catch((err) => {
+					t.rollback();
+					return err
+				})
+		})
 	}
 ,	get: id => {
 		return Implementation.find({
@@ -282,28 +222,66 @@ module.exports = {
 		// 	filter.where = params.filters.map
 		// }
 		// return PorposalProject.findAll(filter)
-		return Implementation.findAll()
+		return Implementation.findAll(params)
 	}
-,	structures: token => {
-		return new Promise((resolve, reject) => {
-			redisDB
+,	structures: async token => {
+		return redisDB
 				.hget('auth:'+token, 'implementation')
-				.then((result, err) => {
+				.then( async (result, err) => {
 					if(err) reject(err)
 
 					result = JSON.parse(result)
 
-					Node.getModel().findAll({
-						attributes: ['id', 'id_parent_node', 'name', 'description', 'amount']
+					return await Node.getModel().findAll({
+						attributes: ['id', 'id_parent_node', 'name', 'description', 'amount', 'cicle']
 					,	where: {
 							[model.Op.and]: [{id_implementation: result.id}, {active: true}]
 						}
-					}).then((result, err) => {
-						console.log(result)
-						if(err) reject(err)
-						resolve(result)
+					}).then(result => {
+						let structure = genStructure(result)
+						console.log(structure)
+						return structure
+					}).catch(err =>{
+						return err
+						reject(err)
 					})
 				})
-		})
 	}
+}
+
+function genStructure(result) {
+	let nodesFathers = _.filter(result, (obj) => {
+		return _.isNull(obj.dataValues.id_parent_node)
+	})
+
+	if (nodesFathers.length === 0) {
+		return []
+	}
+
+	return _.map(
+			nodesFathers
+		,  (obj)=>{
+				let data = obj.dataValues
+				data.childrens = genRecursiveNodes(data, result)
+				console.log(data)
+				return data
+			}
+		)
+}
+
+function genRecursiveNodes(nodeP, allNodes) {
+	let nodesToFilter = _.filter(allNodes, (node) => {
+		return nodeP.id === node.dataValues.id_parent_node
+	})
+	if (nodesToFilter.length === 0) {
+		return []
+	}
+
+	return _.map(nodesToFilter, (obj) => {
+		var data = obj.dataValues
+		if (!data.cicle) {
+			data.childrens = genRecursiveNodes(data, allNodes)
+		}
+		return data
+	})
 }
