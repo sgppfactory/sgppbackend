@@ -1,6 +1,8 @@
 const model = require('./Model');
+const redis = require("../lib/redis"); //Manipulador de la conexión de la BD
 const NodeStage = require('./nodestage');
 const Stage = require('./stage');
+var redisDB = new redis(model.config.redis_connect);
 
 const Node =  model.dbsql.define('node',{
 		id: { 
@@ -87,14 +89,27 @@ module.exports = {
 	getModel : () => {
 		return Node		
 	}
-,	create: params => {
-		try {
-			return Node.create(params)
-		} catch(err) {
-			return new Promise((resolve, reject)=>{
-				reject(err)
+,	create: (params, token) => {
+		return redisDB
+			.hget('auth:'+token, 'implementation')
+			.then((impldata) => {
+				try {
+					let impldata = JSON.parse(impldata)
+					if (!impldata) {
+						throw "Error al obtener datos de sesión"
+					}
+
+					return Node.create(_.extend(
+						params
+					,	{ idImplementation : impldata.id }
+					)).then((result) => {
+						console.log(result)
+						return result.id
+					})
+				} catch(err) {
+					return err
+				}
 			})
-		}
 	}
 ,	get: id => {
 		return Node.findById(id)

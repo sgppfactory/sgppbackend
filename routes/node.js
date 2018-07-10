@@ -26,11 +26,11 @@ module.exports = app => {
 	 */
 	app.post('/node',authLib.ensureAuthenticated, (req, res, next) => {
 		model
-			.create(req.params)
+			.create(req.params, req.token)
 			.then((result) => {
 				if(result) {
 					res.statusCode = 201
-					res.json({"result": result,"message":"Nodo creado correctamente","status":"OK"})
+					res.json({"id": result,"message":"Nodo creado correctamente","status":"OK"})
 				} else {
 					res.statusCode = 409
 					res.json({"msg":"Hubo un error al crear el nodo, inténtelo nuevamente","status":"error"})
