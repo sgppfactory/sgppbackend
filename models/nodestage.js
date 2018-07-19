@@ -48,7 +48,4 @@ module.exports = {
 ,	create: (params, tr) => {
 		return NodeStage.create(params, tr)
 	}
-,	findAll: params => {
-		return NodeStage.findAll(params)
-	}
 }

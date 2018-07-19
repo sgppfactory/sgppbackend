@@ -1,4 +1,5 @@
 model = require('./Model');
+const search = require('../lib/search');
 
 const ProjectStep =  model.dbsql.define('advanceProject',{
 		id: { type: model.cte.INTEGER, primaryKey: true, autoIncrement: true }
@@ -70,26 +71,22 @@ module.exports = {
 		return ProjectStep
 	}
 ,	create :(params) => {
-		try {
-			return ProjectStep.create(params)
-		}catch(err) {
-			console.log(err)
-			return new Promise((resolve, reject)=>{
-				reject(err)
-			})
-		}
+		return ProjectStep.create(params)
 	}
 ,	get: id => {
 		return ProjectStep.findById(id)
 	}
-,	search: params => {
-		// filter:[{key:,value:,operator:}]
-		// filter = {}
-		// if(params.filters) {
-		// 	filter.where = params.filters.map
-		// }
-		// return PorposalProject.findAll(filter)
-		return ProjectStep.findAll()
+,	findAll: params => {
+		let searchObj = new search.Search(params)
+		tosearch = searchObj.getSearch(params)
+		return Task.findAll(tosearch)
+	}
+,	count: params => {
+		let searchObj = new search.Search(params)
+		filter = searchObj.buildFilter(params.filter)
+		return 	Task.count({
+			where: filter
+		})
 	}
 }
 

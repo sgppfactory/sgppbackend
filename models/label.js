@@ -1,5 +1,7 @@
 
-model = require('./Model');
+const model = require('./Model');
+const Stage = require('./stage');
+const Porpose = require('./porpose');
 
 const Label =  model.dbsql.define('label',{
 		id: { 
@@ -45,6 +47,42 @@ const Label =  model.dbsql.define('label',{
 	,	timestamps: false
 	}
 )
+
+NodeStage = model.dbsql.define('label_porpose_project',{
+	idLabel : {
+		type: model.cte.INTEGER
+	,	primaryKey: true
+	, 	field: 'id_label'
+	, 	allowNull: false
+	// ,	references: {
+	// 		model: Node.getModel()
+	// 	,	key: 'id'
+	// 	}
+	,	validate: {
+			isInt : {
+				msg: "El campo de etiqueta es incorrecto"
+			}
+		}
+	},
+	idPorposeProject : {
+		type: model.cte.INTEGER
+	, 	field: 'id_porpose_project'
+	,	primaryKey: true
+	, 	allowNull: false
+	// ,	references: {
+	// 		model: Stage.getModel()
+	// 	,	key: 'id'
+	// 	}
+	,	validate: {
+			isInt : {
+				msg: "El campo de propuesta / proyecto es incorrecto"
+			}
+		}
+	}
+}, {
+	tableName: 'label_porpose_project'
+,	timestamps: false
+})
 
 module.exports = {
 	getModel : () => {

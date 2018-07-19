@@ -128,4 +128,26 @@ module.exports = {
 			})
 		})
 	}
+,	delete: idNode => {
+		if(_.isEmpty(idNode)) {
+			return Promise((resolve, reject) => {
+				reject("Error de parámetros")
+			})
+		}
+
+		return Node.update({
+			active: false
+		}, {
+			where: {
+				id: idNode
+			}
+		})
+	}
+,	update: (params, idNode) => {
+		console.log(params)
+		return Node.update(params, {where: {id: idNode}})
+				// .then((stage) => {
+				// }).catch((err) => {
+				// })
+	}
 }

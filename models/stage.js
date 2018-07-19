@@ -76,5 +76,27 @@ module.exports = {
 ,	get: (id) => {
 		return Stage.findById(id)
 	}
+,	delete: idStage => {
+		if(_.isEmpty(idStage)) {
+			return Promise((resolve, reject) => {
+				reject("Error de parámetros")
+			})
+		}
+
+		return Stage.update({
+			active: false
+		}, {
+			where: {
+				id: idStage
+			}
+		})
+	}
+,	update: (params,idStage) => {
+		console.log(params)
+		return Stage.update(params,{where: {id: idStage}})
+				// .then((stage) => {
+				// }).catch((err) => {
+				// })
+	}
 }
 

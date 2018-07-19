@@ -76,18 +76,6 @@ module.exports = {
 	getModel : () => {
 		return Action
 	}
-,	get: (id) => {
-		return Action.findOne(id)
-	}
-,	findAll: (params) => {
-		// filter:[{key:,value:,operator:}]
-		// filter = {}
-		// if(params.filters) {
-		// 	filter.where = params.filters.map
-		// }
-		// return PorposalProject.findAll(filter)
-		return Action.findAll()
-	}
 ,	findMenu: (token) => {
 		return redisDB.hget('auth:'+token, "actions")
 	}

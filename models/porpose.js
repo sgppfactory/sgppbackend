@@ -119,7 +119,7 @@ module.exports = {
 		try {
 			return PorposalProject.create(params)
 		}catch(err) {
-			console.log(err)
+			// console.log(err)
 			return new Promise((resolve, reject)=>{
 				reject(err)
 			})
@@ -136,5 +136,27 @@ module.exports = {
 		// }
 		// return PorposalProject.findAll(filter)
 		return PorposalProject.findAll()
+	}
+,	count: params => {
+		let searchObj = new search.Search(params)
+		filter = searchObj.buildFilter(params.filter)
+		return 	Person.count({
+			where: filter
+		})
+	}
+,	delete: idPerson => {
+		if(_.isEmpty(idPerson)) {
+			return Promise((resolve, reject) => {
+				reject("Error de parámetros")
+			})
+		}
+
+		return Person.update({
+			active: false
+		}, {
+			where: {
+				id: idPerson
+			}
+		})
 	}
 }

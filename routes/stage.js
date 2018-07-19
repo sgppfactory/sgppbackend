@@ -71,4 +71,62 @@ module.exports = app => {
 				res.json({"message":err,"status":"error"})
 			})
 	});
+
+	/**
+	 * @swagger
+	 * path: /stage
+	 * operations:
+	 *   -  httpMethod: DELETE
+	 *      summary: Obtención de datos de un usuario
+	 *      notes: Retorna información del usuario
+	 *      responseClass: Auth
+	 *      nickname: porpose
+	 *      consumes: 
+	 *        - application/json
+	 */
+	app.del('/stage:id',authLib.ensureAuthenticated, function(req, res, next) {
+		model
+			.delete(req.params.id)
+			.then((result) => {
+				if(result) {
+					res.statusCode = 200
+					res.json({"message":"Etapa dada de baja correctamente","status":"OK"})
+				} else {
+					res.statusCode = 403
+					res.json({"msg":"Etapa inexistente","status":"error"})
+				}
+			},(err) => {
+				res.statusCode = 409
+				res.json({"message":err,"status":"error"})
+			})
+	});
+
+	/**
+	 * @swagger
+	 * path: /stage
+	 * operations:
+	 *   -  httpMethod: PUT
+	 *      summary: Obtención de datos de un usuario
+	 *      notes: Retorna información del usuario
+	 *      responseClass: Auth
+	 *      nickname: porpose
+	 *      consumes: 
+	 *        - application/json
+	 */
+	app.put('/stage:id',authLib.ensureAuthenticated, function(req, res, next) {
+		model
+			.update(req.params)
+			.then((result) => {
+				if(result) {
+					res.statusCode = 200
+					res.json({"message":result,"status":"OK"})
+				} else {
+					res.statusCode = 403
+					res.json({"msg":"Etapa inexistente","status":"error"})
+				}
+			},(err) => {
+				res.statusCode = 409
+				res.json({"message":err,"status":"error"})
+			})
+	});
 }

@@ -8,8 +8,8 @@ UserRoute = function(app){
 	 * path: /menu
 	 * operations:
 	 *   -  httpMethod: GET
-	 *      summary: Obtención de datos de un usuario
-	 *      notes: Retorna información del usuario
+	 *      summary: Obtención del menú asociado al usuario
+	 *      notes: Retorna información del menu la cual posee permiso el usuario
 	 *      responseClass: Menu
 	 *      nickname: menu
 	 *      consumes: 

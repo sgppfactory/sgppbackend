@@ -61,6 +61,33 @@ const Task =  model.dbsql.define('task',{
 	}
 )
 
+const TaskPerson =  model.dbsql.define('task_person',{
+		idTask : {
+			type: model.cte.INTEGER
+		, 	allowNull: false
+		, 	field: 'id_task'
+		,	validations : {
+				isInt:{
+					msg: "El nodo debe ser un valor entero"
+				}
+			}
+		}
+	,	idPerson : {
+			type: model.cte.INTEGER
+		, 	allowNull: false
+		, 	field: 'id_person'
+		,	validations : {
+				isInt:{
+					msg: "El nodo debe ser un valor entero"
+				}
+			}
+		}
+	},{
+		tableName: 'task_person'
+	,	timestamps: false
+	}
+)
+
 module.exports = {
 	getModel : () => {
 		return Task

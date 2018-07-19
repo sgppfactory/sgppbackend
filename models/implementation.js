@@ -49,57 +49,6 @@ const Implementation =  model.dbsql.define('implementation',{
 )
 
 
-//Función recursiva
-function createNode(nodesByGroup, t, implementationId, idParentNode, level, childrens) {
-	return model.dbsql.Promise.map(childrens, (nodeGB) => {
-		objectToSave = _.clone(nodeGB)
-		if(objectToSave.amount == '') {
-			delete objectToSave.amount
-		}
-
-		delete objectToSave.id
-
-		return Node.create(_.extend(
-			objectToSave
-		,	{ idImplementation: implementationId, idParentNode: idParentNode }
-		), {transaction: t})
-		.then((node_result) => {
-			child = _.filter(nodesByGroup[level + 1], (obj)=>{
-				return obj.fatherNode === nodeGB.id
-			})
-
-			if(child && child.length > 0) {
-				return createNode(
-					nodesByGroup
-				, 	t
-				, 	implementationId
-				, 	node_result.dataValues.id
-				, 	level + 1
-				, 	child
-				)
-			} else {
-				return node_result.dataValues
-			}
-		}).catch((error) => {
-			t.rollback()
-			return error
-		})
-	})
-}
-
-function changeDate (latinDate) {
-	var dma = latinDate.split('/')
-  	if (dma.length === 3) {
-  		return dma[2] + '-' + dma[1] + '-' + dma[0]	
-  	} else if (dma.length === 2) {
-		let year = (new Date()).getFullYear()
-  		return year + '-' + dma[1] + '-' + dma[0]	
-  	} else {
-  		return latinDate
-  	}
-}
-
-
 module.exports = {
 	getModel : () => {
 		return Implementation
@@ -215,15 +164,15 @@ module.exports = {
 				});
 		});
 	}
-,	findBy: params => {
-		// filter:[{key:,value:,operator:}]
-		// filter = {}
-		// if(params.filters) {
-		// 	filter.where = params.filters.map
-		// }
-		// return PorposalProject.findAll(filter)
-		return Implementation.findAll(params)
-	}
+// ,	findBy: params => {
+// 		// filter:[{key:,value:,operator:}]
+// 		// filter = {}
+// 		// if(params.filters) {
+// 		// 	filter.where = params.filters.map
+// 		// }
+// 		// return PorposalProject.findAll(filter)
+// 		return Implementation.findAll(params)
+// 	}
 ,	structures: async token => {
 		return redisDB
 				.hget('auth:'+token, 'implementation')
@@ -249,6 +198,11 @@ module.exports = {
 	}
 }
 
+/**
+ * Generación de estructura de forma recursiva
+ * @param result
+ * @retun array
+ */
 function genStructure(result) {
 	let nodesFathers = _.filter(result, (obj) => {
 		return _.isNull(obj.dataValues.id_parent_node)
@@ -269,6 +223,12 @@ function genStructure(result) {
 		)
 }
 
+/**
+ * Generación de estructura de forma recursiva
+ * @param object nodeP
+ * @param array allNodes
+ * @retun array
+ */
 function genRecursiveNodes(nodeP, allNodes) {
 	let nodesToFilter = _.filter(allNodes, (node) => {
 		return nodeP.id === node.dataValues.id_parent_node
@@ -284,4 +244,70 @@ function genRecursiveNodes(nodeP, allNodes) {
 		}
 		return data
 	})
+}
+
+
+
+/**
+ * Generación de nodos de forma recursiva
+ * @param array nodesByGroup
+ * @param object SequelizeTransaction
+ * @param integer implementationId
+ * @param integer idParentNode
+ * @param integer level
+ * @param array childrens
+ * @retun array
+ */
+function createNode(nodesByGroup, t, implementationId, idParentNode, level, childrens) {
+	return model.dbsql.Promise.map(childrens, (nodeGB) => {
+		objectToSave = _.clone(nodeGB)
+		if(objectToSave.amount == '') {
+			delete objectToSave.amount
+		}
+
+		delete objectToSave.id
+
+		return Node.create(_.extend(
+			objectToSave
+		,	{ idImplementation: implementationId, idParentNode: idParentNode }
+		), {transaction: t})
+		.then((node_result) => {
+			child = _.filter(nodesByGroup[level + 1], (obj)=>{
+				return obj.fatherNode === nodeGB.id
+			})
+
+			if(child && child.length > 0) {
+				return createNode(
+					nodesByGroup
+				, 	t
+				, 	implementationId
+				, 	node_result.dataValues.id
+				, 	level + 1
+				, 	child
+				)
+			} else {
+				return node_result.dataValues
+			}
+		}).catch((error) => {
+			t.rollback()
+			return error
+		})
+	})
+}
+
+/**
+ * Cambia el formato de la fecha
+ * Date latinDate
+ * return: string
+ */
+function changeDate (latinDate) {
+	var dma = latinDate.split('/')
+  	if (dma.length === 3) {
+  		return dma[2] + '-' + dma[1] + '-' + dma[0]	
+  	} else if (dma.length === 2) {
+		let year = (new Date()).getFullYear()
+  		return year + '-' + dma[1] + '-' + dma[0]	
+  	} else {
+  		return latinDate
+  	}
 }
