@@ -36,8 +36,14 @@ module.exports = app => {
 					res.json({"msg":"Hubo un error al crear el nodo, inténtelo nuevamente","status":"error"})
 				}
 			},(err) => {
+				errorsMsg = _.isArray(err.errors) 
+					? 	_.map(err.errors, (errmsg) => {
+							return {message: errmsg.message, field: errmsg.path}
+						})
+					: 	err
+
 				res.statusCode = 409
-				res.json({"message":err,"status":"error"})
+				res.json({"message":errorsMsg,"status":"error"})
 			})
 	});
 	 
@@ -136,6 +142,35 @@ module.exports = app => {
 			},(err) => {
 				res.statusCode = 409
 				res.json({"message": err, "status":"error"})
+			})
+	});
+
+	/**
+	 * @swagger
+	 * path: /node
+	 * operations:
+	 *   -  httpMethod: DELETE
+	 *      summary: Obtención de datos de un usuario
+	 *      notes: Retorna información del usuario
+	 *      responseClass: Auth
+	 *      nickname: porpose
+	 *      consumes: 
+	 *        - application/json
+	 */
+	app.del('/node:id',authLib.ensureAuthenticated, function(req, res, next) {
+		model
+			.delete(req.params.id)
+			.then((result) => {
+				if(result) {
+					res.statusCode = 200
+					res.json({"message":"Nodo dada de baja correctamente","status":"OK"})
+				} else {
+					res.statusCode = 403
+					res.json({"msg":"Nodo inexistente","status":"error"})
+				}
+			},(err) => {
+				res.statusCode = 409
+				res.json({"message":err,"status":"error"})
 			})
 	});
 }

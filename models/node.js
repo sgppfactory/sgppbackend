@@ -94,7 +94,7 @@ module.exports = {
 			.hget('auth:'+token, 'implementation')
 			.then((impldata) => {
 				try {
-					let impldata = JSON.parse(impldata)
+					impldata = JSON.parse(impldata)
 					if (!impldata) {
 						throw "Error al obtener datos de sesión"
 					}
@@ -102,10 +102,7 @@ module.exports = {
 					return Node.create(_.extend(
 						params
 					,	{ idImplementation : impldata.id }
-					)).then((result) => {
-						console.log(result)
-						return result.id
-					})
+					))
 				} catch(err) {
 					return err
 				}
@@ -115,6 +112,12 @@ module.exports = {
 		return Node.findById(id)
 	}
 ,	getStagesByNode: (nodeId) => {
+		if(_.isEmpty(nodeId)) {
+			return Promise((resolve, reject) => {
+				reject("Error de parámetros")
+			})
+		}
+
 		return NodeStage.findAll({
 			include: [{
 				model: Stage.getModel()

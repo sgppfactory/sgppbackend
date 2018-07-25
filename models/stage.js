@@ -68,10 +68,20 @@ module.exports = {
 	}
 ,	create :(params) => {
 		console.log(params)
-		return Stage.create(params)
-				// .then((stage) => {
-				// }).catch((err) => {
-				// })
+		params.dateInit = changeDate(params.dateInit)
+		if (_.isEmpty(params.idNode)) {
+			return Stage.create(params)
+		} else {
+			return model.dbsql.transaction((t) => {
+				return Stage.create(params,{transaction : t})
+					.then((resultStg) => {
+						return NodeStage.create({
+							idNode: params.idNode,
+							idStage: resultStg.dataValues.id,
+						},{transaction : t})
+					})
+			})
+		}
 	}
 ,	get: (id) => {
 		return Stage.findById(id)
@@ -94,9 +104,22 @@ module.exports = {
 ,	update: (params,idStage) => {
 		console.log(params)
 		return Stage.update(params,{where: {id: idStage}})
-				// .then((stage) => {
-				// }).catch((err) => {
-				// })
 	}
 }
 
+/**
+ * Cambia el formato de la fecha
+ * Date latinDate
+ * return: string
+ */
+function changeDate (latinDate) {
+	var dma = latinDate.split('/')
+  	if (dma.length === 3) {
+  		return dma[2] + '-' + dma[1] + '-' + dma[0]	
+  	} else if (dma.length === 2) {
+		let year = (new Date()).getFullYear()
+  		return year + '-' + dma[1] + '-' + dma[0]	
+  	} else {
+  		return latinDate
+  	}
+}

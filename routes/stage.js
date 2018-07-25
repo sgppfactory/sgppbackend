@@ -29,16 +29,26 @@ module.exports = app => {
 		model
 			.create(req.params)
 			.then((result) => {
-				if(result) {
+				console.log(result)
+				if(result.dataValues) {
 					res.statusCode = 201
-					res.json({"id": result,"message":"Etapa creada correctamente","status":"OK"})
+					res.json({
+						"id": result.dataValues.idStage
+					,	"message":"Etapa creada correctamente"
+					,	"status":"OK"
+					})
 				} else {
 					res.statusCode = 409
 					res.json({"msg":"Hubo un error al crear la propuesta, inténtelo nuevamente","status":"error"})
 				}
 			},(err) => {
+				errorsMsg = _.isArray(err.errors) 
+					? 	_.map(err.errors, (errmsg) => {
+							return {message: errmsg.message, field: errmsg.path}
+						})
+					: 	err
 				res.statusCode = 409
-				res.json({"message":err,"status":"error"})
+				res.json({"message":errorsMsg,"status":"error"})
 			})
 	});
 	 

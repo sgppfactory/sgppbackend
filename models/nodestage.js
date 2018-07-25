@@ -48,4 +48,7 @@ module.exports = {
 ,	create: (params, tr) => {
 		return NodeStage.create(params, tr)
 	}
+,	findAll: params => { //Necesario para otro endpoint
+		return NodeStage.findAll(params)
+	}
 }
