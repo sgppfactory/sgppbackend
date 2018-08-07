@@ -23,7 +23,7 @@ module.exports = function(app) {
 					res.json({"message":result,"status":"OK"})
 				} else {
 					res.statusCode = 403
-					res.json({"msg":"Implementation inexistente","status":"error"})
+					res.json({"message":"Implementation inexistente","status":"error"})
 				}
 			},(err) => {
 				res.statusCode = 409
@@ -52,7 +52,7 @@ module.exports = function(app) {
 					res.json({"message":result,"status":"OK"})
 				} else {
 					res.statusCode = 403
-					res.json({"msg":"Implementation inexistente","status":"error"})
+					res.json({"message":"Implementation inexistente","status":"error"})
 				}
 			},(err) => {
 				res.statusCode = 409
@@ -81,11 +81,9 @@ module.exports = function(app) {
 					res.json({"message":"Estructura creada correctamente","status":"OK"})
 				} else {
 					res.statusCode = 403
-					res.json({"msg":"Error al crear la configuración", "status":"error"})
+					res.json({"message":"Error al crear la configuración", "status":"error"})
 				}
 			}, (err) => {
-				// if ()
-				console.log(err)
 				res.statusCode = 409
 				res.json({"message":err,"status":"error"})
 			})

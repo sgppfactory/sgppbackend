@@ -27,7 +27,7 @@ module.exports = function(app) {
 	 */
 	app.post('/porpose',authLib.ensureAuthenticated, function(req, res, next) {
 		model
-			.create(req.params)
+			.create(req.params, req.token)
 			.then((result) => {
 				console.log(result)
 				if(result) {

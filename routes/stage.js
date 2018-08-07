@@ -1,5 +1,6 @@
 const model = require('../models/stage');
 const authLib = require('../lib/auth'); //Librería para manejar la autenticación
+const resultLib = require('../lib/result');
 
 module.exports = app => {
 	/**
@@ -29,7 +30,6 @@ module.exports = app => {
 		model
 			.create(req.params)
 			.then((result) => {
-				console.log(result)
 				if(result.dataValues) {
 					res.statusCode = 201
 					res.json({
@@ -42,13 +42,8 @@ module.exports = app => {
 					res.json({"msg":"Hubo un error al crear la propuesta, inténtelo nuevamente","status":"error"})
 				}
 			},(err) => {
-				errorsMsg = _.isArray(err.errors) 
-					? 	_.map(err.errors, (errmsg) => {
-							return {message: errmsg.message, field: errmsg.path}
-						})
-					: 	err
 				res.statusCode = 409
-				res.json({"message":errorsMsg,"status":"error"})
+				res.json({"message": resultLib.getMsgSeq(err),"status":"error"})
 			})
 	});
 	 

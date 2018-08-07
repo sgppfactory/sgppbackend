@@ -1,5 +1,6 @@
 const model = require('../models/node');
 const authLib = require('../lib/auth'); //Librería para manejar la autenticación
+const resultLib = require('../lib/result');
 
 module.exports = app => {
 	/**
@@ -30,20 +31,21 @@ module.exports = app => {
 			.then((result) => {
 				if(result) {
 					res.statusCode = 201
-					res.json({"id": result,"message":"Nodo creado correctamente","status":"OK"})
+					res.json({
+						"id": result.dataValues.id
+					, 	"message": "Nodo creado correctamente"
+					, 	"status": "OK"
+					})
 				} else {
 					res.statusCode = 409
-					res.json({"msg":"Hubo un error al crear el nodo, inténtelo nuevamente","status":"error"})
+					res.json({
+						"message": "Hubo un error al crear el nodo, inténtelo nuevamente"
+					, 	"status": "error"
+					})
 				}
 			},(err) => {
-				errorsMsg = _.isArray(err.errors) 
-					? 	_.map(err.errors, (errmsg) => {
-							return {message: errmsg.message, field: errmsg.path}
-						})
-					: 	err
-
 				res.statusCode = 409
-				res.json({"message":errorsMsg,"status":"error"})
+				res.json({"message": resultLib.getMsgSeq(err), "status": "error"})
 			})
 	});
 	 
@@ -68,7 +70,7 @@ module.exports = app => {
 					res.json({"message":result,"status":"OK"})
 				} else {
 					res.statusCode = 403
-					res.json({"msg":"El nodo solicitado no existe","status":"error"})
+					res.json({"message":"El nodo solicitado no existe","status":"error"})
 				}
 			},(err) => {
 				res.statusCode = 409
@@ -97,7 +99,7 @@ module.exports = app => {
 					res.json({"message":result,"status":"OK"})
 				} else {
 					res.statusCode = 403
-					res.json({"msg":"No existen etapas para el nodo solicitado","status":"error"})
+					res.json({"message":"No existen etapas para el nodo solicitado","status":"error"})
 				}
 			},(err) => {
 				res.statusCode = 409
@@ -166,7 +168,7 @@ module.exports = app => {
 					res.json({"message":"Nodo dada de baja correctamente","status":"OK"})
 				} else {
 					res.statusCode = 403
-					res.json({"msg":"Nodo inexistente","status":"error"})
+					res.json({"message":"Nodo inexistente","status":"error"})
 				}
 			},(err) => {
 				res.statusCode = 409

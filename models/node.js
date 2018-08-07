@@ -91,14 +91,17 @@ module.exports = {
 	}
 ,	create: (params, token) => {
 		return redisDB
-			.hget('auth:'+token, 'implementation')
+			.hget('auth:' + token, 'implementation')
 			.then((impldata) => {
 				try {
 					impldata = JSON.parse(impldata)
 					if (!impldata) {
 						throw "Error al obtener datos de sesión"
 					}
-
+					if (_.isEmpty(params.amount)) {
+						delete params.amount;
+					}
+					console.log(params)
 					return Node.create(_.extend(
 						params
 					,	{ idImplementation : impldata.id }

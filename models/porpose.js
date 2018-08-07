@@ -115,15 +115,22 @@ module.exports = {
 	getModel : () => {
 		return PorposalProject
 	}
-,	create :(params) => {
-		try {
-			return PorposalProject.create(params)
-		}catch(err) {
-			// console.log(err)
-			return new Promise((resolve, reject)=>{
-				reject(err)
+,	create :(params, token) => {
+		return redisDB
+			.hget('auth:'+token, 'implementation')
+			.then((impldata) => {
+				try {
+					impldata = JSON.parse(impldata)
+					if (!impldata) {
+						throw "Error al obtener datos de sesión"
+					}
+
+					return PorposalProject.create(params)
+				}catch(err) {
+					// console.log(err)
+					return err
+				}
 			})
-		}
 	}
 ,	get: (id) => {
 		return PorposalProject.findOne(id)
