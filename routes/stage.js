@@ -59,10 +59,39 @@ module.exports = app => {
 	 *      consumes: 
 	 *        - application/json
 	 */
-	app.get('/stage:id',authLib.ensureAuthenticated, function(req, res, next) {
+	app.get('/stage/:id',authLib.ensureAuthenticated, function(req, res, next) {
 		console.log(req.params)
 		model
 			.get(req.params.id)
+			.then((result) => {
+				if(result) {
+					res.statusCode = 200
+					res.json({"message":result,"status":"OK"})
+				} else {
+					res.statusCode = 403
+					res.json({"msg":"Etapa inexistente","status":"error"})
+				}
+			},(err) => {
+				res.statusCode = 409
+				res.json({"message":err,"status":"error"})
+			})
+	});
+
+	/**
+	 * @swagger
+	 * path: /stage
+	 * operations:
+	 *   -  httpMethod: PUT
+	 *      summary: Obtención de datos de un usuario
+	 *      notes: Retorna información del usuario
+	 *      responseClass: Auth
+	 *      nickname: porpose
+	 *      consumes: 
+	 *        - application/json
+	 */
+	app.put('/stage/:id',authLib.ensureAuthenticated, function(req, res, next) {
+		model
+			.update(req.params)
 			.then((result) => {
 				if(result) {
 					res.statusCode = 200
@@ -89,7 +118,7 @@ module.exports = app => {
 	 *      consumes: 
 	 *        - application/json
 	 */
-	app.del('/stage:id',authLib.ensureAuthenticated, function(req, res, next) {
+	app.del('/stage/:id',authLib.ensureAuthenticated, function(req, res, next) {
 		model
 			.delete(req.params.id)
 			.then((result) => {
@@ -102,36 +131,7 @@ module.exports = app => {
 				}
 			},(err) => {
 				res.statusCode = 409
-				res.json({"message":err,"status":"error"})
-			})
-	});
-
-	/**
-	 * @swagger
-	 * path: /stage
-	 * operations:
-	 *   -  httpMethod: PUT
-	 *      summary: Obtención de datos de un usuario
-	 *      notes: Retorna información del usuario
-	 *      responseClass: Auth
-	 *      nickname: porpose
-	 *      consumes: 
-	 *        - application/json
-	 */
-	app.put('/stage:id',authLib.ensureAuthenticated, function(req, res, next) {
-		model
-			.update(req.params)
-			.then((result) => {
-				if(result) {
-					res.statusCode = 200
-					res.json({"message":result,"status":"OK"})
-				} else {
-					res.statusCode = 403
-					res.json({"msg":"Etapa inexistente","status":"error"})
-				}
-			},(err) => {
-				res.statusCode = 409
-				res.json({"message":err,"status":"error"})
+				res.json({"message": resultLib.getMsgSeq(err), "status":"error"})
 			})
 	});
 }

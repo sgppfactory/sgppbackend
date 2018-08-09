@@ -135,34 +135,30 @@ module.exports = {
 ,	get: (id) => {
 		return PorposalProject.findOne(id)
 	}
-,	search: (params) => {
-		// filter:[{key:,value:,operator:}]
-		// filter = {}
-		// if(params.filters) {
-		// 	filter.where = params.filters.map
-		// }
-		// return PorposalProject.findAll(filter)
+,	findAll: (params) => {
+		let searchObj = new search.Search(params)
+		tosearch = searchObj.getSearch(params)
 		return PorposalProject.findAll()
 	}
 ,	count: params => {
 		let searchObj = new search.Search(params)
 		filter = searchObj.buildFilter(params.filter)
-		return 	Person.count({
+		return 	PorposalProject.count({
 			where: filter
 		})
 	}
-,	delete: idPerson => {
-		if(_.isEmpty(idPerson)) {
+,	delete: idPorpose => {
+		if(_.isEmpty(idPorpose)) {
 			return Promise((resolve, reject) => {
 				reject("Error de parámetros")
 			})
 		}
 
-		return Person.update({
+		return PorposalProject.update({
 			active: false
 		}, {
 			where: {
-				id: idPerson
+				id: idPorpose
 			}
 		})
 	}

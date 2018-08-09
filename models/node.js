@@ -101,7 +101,7 @@ module.exports = {
 					if (_.isEmpty(params.amount)) {
 						delete params.amount;
 					}
-					console.log(params)
+					// console.log(params)
 					return Node.create(_.extend(
 						params
 					,	{ idImplementation : impldata.id }
@@ -111,8 +111,8 @@ module.exports = {
 				}
 			})
 	}
-,	get: id => {
-		return Node.findById(id)
+,	get: idNode => {
+		return Node.findOne({ where: { id: idNode, active: true }})
 	}
 ,	getStagesByNode: (nodeId) => {
 		if(_.isEmpty(nodeId)) {
@@ -149,11 +149,12 @@ module.exports = {
 			}
 		})
 	}
-,	update: (params, idNode) => {
-		console.log(params)
-		return Node.update(params, {where: {id: idNode}})
-				// .then((stage) => {
-				// }).catch((err) => {
-				// })
+,	update: (params) => {
+		idNode = params.id
+		delete params.id
+		if (_.isEmpty(params.amount) || params.amount === 'null') {
+			delete params.amount;
+		}
+		return Node.update(params, {where: {id: idNode, active:true}})
 	}
 }

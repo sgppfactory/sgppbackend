@@ -83,8 +83,8 @@ module.exports = {
 			})
 		}
 	}
-,	get: (id) => {
-		return Stage.findById(id)
+,	get: (idStage) => {
+		return Stage.findOne({ where: { id: idStage, active: true }})
 	}
 ,	delete: idStage => {
 		if(_.isEmpty(idStage)) {
@@ -101,9 +101,9 @@ module.exports = {
 			}
 		})
 	}
-,	update: (params,idStage) => {
+,	update: (params) => {
 		console.log(params)
-		return Stage.update(params,{where: {id: idStage}})
+		return Stage.update(params, {where: {id: params.id, active: true}})
 	}
 }
 

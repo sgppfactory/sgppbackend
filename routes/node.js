@@ -159,7 +159,7 @@ module.exports = app => {
 	 *      consumes: 
 	 *        - application/json
 	 */
-	app.del('/node:id',authLib.ensureAuthenticated, function(req, res, next) {
+	app.del('/node/:id',authLib.ensureAuthenticated, function(req, res, next) {
 		model
 			.delete(req.params.id)
 			.then((result) => {
@@ -173,6 +173,35 @@ module.exports = app => {
 			},(err) => {
 				res.statusCode = 409
 				res.json({"message":err,"status":"error"})
+			})
+	});
+
+	/**
+	 * @swagger
+	 * path: /node/:id
+	 * operations:
+	 *   -  httpMethod: PUT
+	 *      summary: Obtención de datos de un usuario
+	 *      notes: Retorna información del usuario
+	 *      responseClass: Auth
+	 *      nickname: porpose
+	 *      consumes: 
+	 *        - application/json
+	 */
+	app.put('/node/:id',authLib.ensureAuthenticated, function(req, res, next) {
+		model
+			.update(req.params)
+			.then((result) => {
+				if(result) {
+					res.statusCode = 200
+					res.json({"message":"Nodo modificado correctamente","status":"OK"})
+				} else {
+					res.statusCode = 403
+					res.json({"message":"Etapa inexistente","status":"error"})
+				}
+			},(err) => {
+				res.statusCode = 409
+				res.json({"message": resultLib.getMsgSeq(err),"status":"error"})
 			})
 	});
 }
