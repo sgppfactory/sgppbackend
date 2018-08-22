@@ -2,6 +2,7 @@ const model = require('./Model');
 const redis = require("../lib/redis"); //Manipulador de la conexión de la BD
 const NodeStage = require('./nodestage');
 const Stage = require('./stage');
+const search = require('../lib/search');
 var redisDB = new redis(model.config.redis_connect);
 
 const Node =  model.dbsql.define('node',{
@@ -114,25 +115,64 @@ module.exports = {
 ,	get: idNode => {
 		return Node.findOne({ where: { id: idNode, active: true }})
 	}
-,	getStagesByNode: (nodeId) => {
+,	getStagesByNode: (nodeId, token) => {
 		if(_.isEmpty(nodeId)) {
 			return Promise((resolve, reject) => {
 				reject("Error de parámetros")
 			})
 		}
 
-		return NodeStage.findAll({
-			include: [{
-				model: Stage.getModel()
-			, 	attributes:['id', 'name', 'is_project', 'order']
-			,	where: {active: true}
-			}]
-		, 	where: {idNode: nodeId}
-		}).then((toReturn) => {
-			return _.map(toReturn, (obj) => {
-				return obj.dataValues.stage.dataValues
+		return redisDB
+			.hget('auth:' + token, 'implementation')
+			.then((impldata) => {
+				impldata = JSON.parse(impldata)
+				if (!impldata) {
+					throw "Error al obtener datos de sesión"
+				}
+				return Node.findOne({
+					where: {idImplementation : impldata.id, active: true, id: nodeId}
+				}).then(node => {
+					if (node) {
+						return NodeStage.findAll({
+							include: [{
+								model: Stage.getModel()
+							, 	attributes: ['id', 'name', 'is_project', 'order']
+							,	where: {active: true}
+							}]
+						, 	where: {idNode: nodeId}
+						}).then((toReturn) => {
+							return _.map(toReturn, (obj) => {
+								return obj.dataValues.stage.dataValues
+							})
+						})
+					} else {
+						throw "Nodo desconocido"
+					}
+				})
+
 			})
-		})
+	}
+,	search: (params, token) => {
+		if(_.isEmpty(token)) {
+			return Promise((resolve, reject) => {
+				reject("Error de parámetros")
+			})
+		}
+
+		return redisDB
+			.hget('auth:' + token, 'implementation')
+			.then((impldata) => {
+				impldata = JSON.parse(impldata)
+				if (!impldata) {
+					throw "Error al obtener datos de sesión"
+				}
+				params.filter.push({"key":"idImplementation","value":impldata.id,"operator":"AND"})
+				
+				let searchObj = new search.Search(params)
+				tosearch = searchObj.getSearch(params)
+
+				return Node.findAll(tosearch)
+			})
 	}
 ,	delete: idNode => {
 		if(_.isEmpty(idNode)) {
@@ -155,6 +195,6 @@ module.exports = {
 		if (_.isEmpty(params.amount) || params.amount === 'null') {
 			delete params.amount;
 		}
-		return Node.update(params, {where: {id: idNode, active:true}})
+		return Node.update(params, {where: {id: idNode, active: true}})
 	}
 }

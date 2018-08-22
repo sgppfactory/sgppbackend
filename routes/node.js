@@ -25,7 +25,7 @@ module.exports = app => {
 	 *          required: true
 	 *          dataType: string
 	 */
-	app.post('/node',authLib.ensureAuthenticated, (req, res, next) => {
+	app.post('/nodes',authLib.ensureAuthenticated, (req, res, next) => {
 		model
 			.create(req.params, req.token)
 			.then((result) => {
@@ -61,7 +61,7 @@ module.exports = app => {
 	 *      consumes: 
 	 *        - application/json
 	 */
-	app.get('/node/:id',authLib.ensureAuthenticated, function(req, res, next) {
+	app.get('/nodes/:id',authLib.ensureAuthenticated, function(req, res, next) {
 		model
 			.get(req.params.id)
 			.then((result) => {
@@ -90,9 +90,9 @@ module.exports = app => {
 	 *      consumes: 
 	 *        - application/json
 	 */
-	app.get('/node/:id/stages',authLib.ensureAuthenticated, function(req, res, next) {
+	app.get('/nodes/:id/stages',authLib.ensureAuthenticated, function(req, res, next) {
 		model
-			.getStagesByNode(req.params.id)
+			.getStagesByNode(req.params.id, req.token)
 			.then((result) => {
 				if(result) {
 					res.statusCode = 200
@@ -109,7 +109,7 @@ module.exports = app => {
 
 	/**
 	 * @swagger
-	 * path: /node
+	 * path: /nodes
 	 * operations:
 	 *   -  httpMethod: GET
 	 *      summary: Buscador de nodos
@@ -135,9 +135,9 @@ module.exports = app => {
 	 *          required: false
 	 *          dataType: integer
 	 */
-	app.get('/node',authLib.ensureAuthenticated, function(req, res, next) {
+	app.get('/nodes',authLib.ensureAuthenticated, function(req, res, next) {
 		model
-			.get(req.params)
+			.search(req.params, req.token)
 			.then((result) => {
 				res.statusCode = 200
 				res.json({"message":result,"status":"OK"})
@@ -159,7 +159,7 @@ module.exports = app => {
 	 *      consumes: 
 	 *        - application/json
 	 */
-	app.del('/node/:id',authLib.ensureAuthenticated, function(req, res, next) {
+	app.del('/nodes/:id',authLib.ensureAuthenticated, function(req, res, next) {
 		model
 			.delete(req.params.id)
 			.then((result) => {
@@ -188,7 +188,7 @@ module.exports = app => {
 	 *      consumes: 
 	 *        - application/json
 	 */
-	app.put('/node/:id',authLib.ensureAuthenticated, function(req, res, next) {
+	app.put('/nodes/:id',authLib.ensureAuthenticated, function(req, res, next) {
 		model
 			.update(req.params)
 			.then((result) => {
