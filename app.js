@@ -18,8 +18,8 @@ const cors = corsMiddleware({
 
 const app = restify.createServer({
 	name: 'sgppApi',
-	// certificate: fs.readFileSync('/var/certs/ssl/cert.pem'),
-	// key: fs.readFileSync('/var/certs/ssl/privkey.pem')
+	certificate: fs.readFileSync('/var/certs/ssl/cert.pem'),
+	key: fs.readFileSync('/var/certs/ssl/privkey.pem')
 });
 
 app.pre((req,res,next) => {
