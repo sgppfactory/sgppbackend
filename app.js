@@ -4,7 +4,6 @@
  * resourcePath: /api
  * description: All about API
  */
-const dns = require('dns');
 const _ = require('underscore'); //Sólamente para tener algunas herramientas más para desarrollar
 const restify = require('restify'); //framework REST
 const fs = require('fs'); //filesystem
@@ -20,7 +19,6 @@ const cors = corsMiddleware({
 const app = restify.createServer({
 	name: 'sgppApi',
 	certificate: fs.readFileSync('/var/certs/ssl/cert.pem'),
-	// chain: fs.readFileSync('/var/certs/ssl/chain.pem'),
 	key: fs.readFileSync('/var/certs/ssl/privkey.pem')
 });
 
@@ -43,10 +41,6 @@ var routesArr = ["auth","porpose","node","cicle","stage","person","user","action
 for(var x = 0; routesArr.length > x; x++) {
 	require("./routes/" + routesArr[x])(app);
 }
-
-dns.lookup('api.forkb.com.ar', function (err, addresses, family) {
-  console.log(addresses);
-});
 
 app.listen(3000, '0.0.0.0', () => {
   	console.log('Server "%s" escuchando a la URI %s',app.name,app.url);
