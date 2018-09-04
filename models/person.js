@@ -178,8 +178,33 @@ module.exports = {
 			// })
 		// })
 	}
-,	get: id => {
-		return Person.findById(id)
+,	get: idPerson => {
+		if(_.isEmpty(idPerson)) {
+			return Promise((resolve, reject) => {
+				reject("Error de parámetros")
+			})
+		}
+
+		return Person
+			.findOne({
+				attributes: ['id', 'name', 'lastname', 'email', 'tel', 'cel', 'location', 'dateBirth'], 
+				where: { id: idPerson, active: true }
+			}).then((resultPerson) => {
+				return 	resultPerson
+						?	UserInstance
+								.findOne({
+									attributes: ['username', 'idRol'],
+									where: {idPerson: idPerson, active: true}
+								}).then((resultUser) => {
+									return 	resultUser 
+											? 	_.extend(
+													resultPerson.dataValues
+												, 	resultUser.dataValues
+												)
+											: 	resultPerson.dataValues
+								})
+						: 	null
+			})
 	}
 ,	findAll: params => {
 		let searchObj = new search.Search(params)

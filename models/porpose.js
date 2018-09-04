@@ -3,6 +3,8 @@
 model = require('./Model');
 Node = require('./node');
 const search = require('../lib/search');
+const redis = require("../lib/redis"); //Manipulador de la conexión de la BD
+var redisDB = new redis(model.config.redis_connect);
 
 const PorposalProject =  model.dbsql.define(
 	'porpose_project'
@@ -49,7 +51,7 @@ const PorposalProject =  model.dbsql.define(
 		,	defaultValue: null
 		,	validate: { 
 				isJSON : {
-					msg : "El monto debe tener un formato de moneda del tipo XXXX.XX"
+					msg : "La ubicación posee un formato incorrecto"
 				}
 			}
 		}
@@ -115,7 +117,7 @@ module.exports = {
 	getModel : () => {
 		return PorposalProject
 	}
-,	create :(params, token) => {
+,	create: (params, token) => {
 		return redisDB
 			.hget('auth:'+token, 'implementation')
 			.then((impldata) => {
