@@ -29,7 +29,7 @@ module.exports = app => {
 		model
 			.create(req.params, req.token)
 			.then((result) => {
-				if(result) {
+				if(result.dataValues) {
 					res.statusCode = 201
 					res.json({
 						"id": result.dataValues.id
@@ -43,9 +43,9 @@ module.exports = app => {
 					, 	"status": "error"
 					})
 				}
-			},(err) => {
+			}).catch((err) => {
 				res.statusCode = 409
-				res.json({"message": resultLib.getMsgSeq(err), "status": "error"})
+				res.json({"message": resultLib.getMsgSeq(err), "status":"error"})
 			})
 	});
 	 

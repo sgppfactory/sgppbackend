@@ -31,14 +31,21 @@ module.exports = function(app) {
 			.create(req.params, req.token)
 			.then((result) => {
 				console.log(result)
-				if(result) {
+				if(result.dataValues) {
 					res.statusCode = 201
-					res.json({"id": result,"message":"Propuesta creada correctamente","status":"OK"})
+					res.json({
+						"id": result.dataValues.id
+					,	"message":"Propuesta creada correctamente"
+					,	"status":"OK"
+					})
 				} else {
 					res.statusCode = 409
-					res.json({"msg":"Hubo un error al crear la propuesta, inténtelo nuevamente","status":"error"})
+					res.json({
+						"message":"Hubo un error al crear la propuesta, inténtelo nuevamente"
+					,	"status":"error"
+					})
 				}
-			},(err) => {
+			}).catch((err) => {
 				res.statusCode = 409
 				res.json({"message": resultLib.getMsgSeq(err),"status":"error"})
 			})

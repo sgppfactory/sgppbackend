@@ -131,9 +131,6 @@ module.exports = {
 							})
 						}).then((toReturn) => {
 							// creo que acá tengo que tirar la onda
-							// t.commit();
-							// resolve(ok);
-							// console.log("ok",ok)
 							ok = _.flatten(toReturn)
 							return ok.length > 0
 						}).catch((err) => {
@@ -144,6 +141,8 @@ module.exports = {
 					t.rollback();
 					return err
 				})
+		}).catch((err) => {
+			return err
 		})
 	}
 ,	get: id => {
@@ -175,26 +174,26 @@ module.exports = {
 // 	}
 ,	structures: async token => {
 		return redisDB
-				.hget('auth:'+token, 'implementation')
-				.then( async (result, err) => {
-					if(err) reject(err)
+			.hget('auth:'+token, 'implementation')
+			.then( async (result, err) => {
+				if(err) reject(err)
 
-					result = JSON.parse(result)
+				result = JSON.parse(result)
 
-					return await Node.getModel().findAll({
-						attributes: ['id', 'id_parent_node', 'name', 'description', 'amount', 'cicle']
-					,	where: {
-							[model.Op.and]: [{id_implementation: result.id}, {active: true}]
-						}
-					}).then(result => {
-						let structure = genStructure(result)
-						console.log(structure)
-						return structure
-					}).catch(err =>{
-						return err
-						reject(err)
-					})
+				return await Node.getModel().findAll({
+					attributes: ['id', 'id_parent_node', 'name', 'description', 'amount', 'cicle']
+				,	where: {
+						[model.Op.and]: [{id_implementation: result.id}, {active: true}]
+					}
+				}).then(result => {
+					let structure = genStructure(result)
+					console.log(structure)
+					return structure
+				}).catch(err =>{
+					return err
+					reject(err)
 				})
+			})
 	}
 }
 

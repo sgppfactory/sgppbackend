@@ -46,9 +46,8 @@ const PorposalProject =  model.dbsql.define(
 		}
 	,	details : {type: model.cte.TEXT, allowNull: true}
 	,	location : {
-			type: model.cte.TEXT
+			type: model.cte.STRING
 		, 	allowNull: true
-		,	defaultValue: null
 		,	validate: { 
 				isJSON : {
 					msg : "La ubicación posee un formato incorrecto"
@@ -118,6 +117,7 @@ module.exports = {
 		return PorposalProject
 	}
 ,	create: (params, token) => {
+		console.log(params)
 		return redisDB
 			.hget('auth:'+token, 'implementation')
 			.then((impldata) => {
@@ -128,8 +128,7 @@ module.exports = {
 					}
 
 					return PorposalProject.create(params)
-				}catch(err) {
-					// console.log(err)
+				} catch(err) {
 					return err
 				}
 			})

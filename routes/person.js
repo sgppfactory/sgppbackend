@@ -1,5 +1,6 @@
 const model = require('../models/person');
 const authLib = require('../lib/auth'); //Librería para manejar la autenticación
+const resultLib = require('../lib/result');
 
 module.exports = app => {
 	/**
@@ -28,16 +29,16 @@ module.exports = app => {
 		model
 			.create(req.params)
 			.then((result) => {
-				if(result) {
+				if(result.dataValues) {
 					res.statusCode = 201
-					res.json({"result": result,"message":"Persona creada correctamente","status":"OK"})
+					res.json({"result": result.get('id'),"message":"Persona creada correctamente","status":"OK"})
 				} else {
 					res.statusCode = 409
-					res.json({"msg":"Hubo un error al crear a la persona, inténtelo nuevamente","status":"error"})
+					res.json({"message": resultLib.getMsgSeq(result),"status":"error"})
 				}
-			},(err) => {
+			}).catch((err) => {
 				res.statusCode = 409
-				res.json({"message":err,"status":"error"})
+				res.json({"message": resultLib.getMsgSeq(err), "status":"error"})
 			})
 	});
 	 

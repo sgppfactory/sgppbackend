@@ -83,9 +83,9 @@ module.exports = function(app) {
 					res.statusCode = 403
 					res.json({"message":"Error al crear la configuración", "status":"error"})
 				}
-			}, (err) => {
+			}).catch((err) => {
 				res.statusCode = 409
-				res.json({"message":err,"status":"error"})
+				res.json({"message": resultLib.getMsgSeq(err), "status":"error"})
 			})
 	});
 }

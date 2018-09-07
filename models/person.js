@@ -15,7 +15,7 @@ var mailOptions = {
 	subject: 	'Creación de usuario para SGPP'
 }
 
-var htmlBody = '<h3>Bienvenidos al sistema de gestión de Presupuestos Participativos</h3><p>A partir de ahora, puede ingresar al sistema con la siguiente credencial.</p><p><b>Usuario: {{username}}</b></p><p><b>Contraseña: {{pass}}</b></p><p>Recuerde que puede cambiar su contraseña una vez ingresado al sistema.</p>'
+var htmlBody = '<h3>Bienvenido/a al sistema de gestión de Presupuestos Participativos!</h3><p>A partir de ahora, puede ingresar al sistema con la siguiente credencial.</p><p><b>Usuario: {{username}}</b></p><p><b>Contraseña: {{pass}}</b></p><p>Recuerde que puede cambiar su contraseña una vez ingresado al sistema.</p><p>Ingrese a <a href="https://forkb.com.ar">forkb.com.ar</a></p>'
 
 UserInstance = user.getModel();
 
@@ -119,64 +119,68 @@ const Person =  model.dbsql.define('person',{
 
 module.exports = {
 	create : params => {
-		// return new Promise((resolve, reject) => {
 		return model.dbsql.transaction((t) => {
-			return Person.create({
-				name: 		params.name
-			,	lastname: 	params.lastname
-			,	email: 		params.email
-			,	tel: 		params.tel
-			,	cel: 		params.cel
-			,	location: 	params.location
-			,	dateBirth: 	params.dateBirth
-			}, {transaction: t}).then((resultPerson) => {
-				if (params.withuser == 'true') {
-					password = Math.random() * Date.now()
-					return UserInstance.create({
-						username: params.email
-					,	password: md5(password).toString()
-					,	idRol: params.rol
-					,	firstLogin: false
-					,	idPerson: resultPerson.get('id')
-					}, {transaction: t}).then((resultUser) => {
-						return new Promise((resolve, reject) => {
-							return transporter.sendMail(
-								_.extend(
-									mailOptions
-								,	{
-										html: htmlBody
-											.replace("{{username}}", params.email)
-											.replace("{{pass}}", password)
-									,	to: params.email
-									}
-								)
-							,	(error, info) => {
-									if(error) {
-										throw new Error("No se pudo enviar el mail");
-									} else {
-										resolve(resultPerson.get('id'))
-									}
-								}
-							)
-						})
-					}, (err) => {
-						throw new Error(err);
-					})
-				} 
-				return new Promise((resolve, reject) => {
-					resolve(resultPerson.get('id'))
-				})
-			}, (err) => {
-				throw new Error(err);
-			})
-		})
+			return Person
+				.findOne({where: {email: params.email, active: 1}})
+				.then((aPerson) => {
+					if (aPerson) {
+						throw "Ya existe una persona con el mismo email ingresado."
+					} else {
+						return Person.create({
+								name: 		params.name
+							,	lastname: 	params.lastname
+							,	email: 		params.email
+							,	tel: 		params.tel
+							,	cel: 		params.cel
+							,	location: 	params.location
+							,	dateBirth: 	params.dateBirth
+							}, {transaction: t}
+						).then((resultPerson) => {
+							if (params.withuser == 'true') {
+								password = Math.random() * Date.now()
+								return UserInstance.create({
+										username: params.email
+									,	password: md5(password).toString()
+									,	idRol: params.rol
+									,	firstLogin: false
+									,	idPerson: resultPerson.get('id')
+									}, {transaction: t}
+								).then((resultUser) => {
+									return transporter.sendMail(
+										_.extend(
+											mailOptions
+										,	{
+												html: htmlBody
+													.replace("{{username}}", params.email)
+													.replace("{{pass}}", password)
+											,	to: params.email
+											}
+										)
+									,	(error, info) => {
+											if (error) {
+												throw "No se pudo enviar el mail";
+											} else {
+												return resultPerson
+											}
+										}
+									)
+								}).catch((err) => {
+									t.rollback()
+									return err
+								})
+							} 
 
-			// .then( (result) => {
-			// 	resolve(result)
-			// }).catch( (error) => {
-			// 	reject(error)
-			// })
-		// })
+							return resultPerson
+						})
+					}
+				}).catch((err) => {
+					return err
+				})
+		}).then((result) => {
+			return result
+		}).catch((err) => {
+			return err
+		})
 	}
 ,	get: idPerson => {
 		if(_.isEmpty(idPerson)) {
