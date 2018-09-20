@@ -107,40 +107,48 @@ module.exports = {
 								throw "Cantidad de etapas incorrectas"
 							}
 
-							return model.dbsql.Promise.map(stages, (stage) => {
-								stage.isproject = (_.isBoolean(stage.isproject) &&  stage.isproject) 
-									|| stage.isproject === 'true'
+							return Cicle.create(
+									{date: new Date(), currency: true, idImplementation: impldata.id}
+								, 	{transaction: t}
+								).then((stageRet) => {
+									// TODO: FALTA CREAR UN CICLO
+									return model.dbsql.Promise.map(stages, (stage) => {
+										stage.isproject = (_.isBoolean(stage.isproject) &&  stage.isproject) 
+											|| stage.isproject === 'true'
 
-								stage.dateInit = changeDate(stage.dateInit)
+										stage.dateInit = changeDate(stage.dateInit)
 
-								return Stage.create(stage, {transaction: t})
-									.then((stageRet) => {
-										return model.dbsql.Promise.map(nodes, (nodeC) => { 
-											return NodeStage.create(
-												{idStage: stageRet.id, idNode: nodeC.id}, 
-												{transaction: t}
-											).catch((err) => {
+										return Stage.create(stage, {transaction: t})
+											.then((stageRet) => {
+												return model.dbsql.Promise.map(nodes, (nodeC) => { 
+													return NodeStage.create(
+														{idStage: stageRet.id, idNode: nodeC.id}, 
+														{transaction: t}
+													).catch((err) => {
+														t.rollback();
+														return err
+													})
+												})
+											}).catch((err) => {
 												t.rollback();
 												return err
 											})
-										})
-									}).catch((err) => {
-										t.rollback();
-										return err
 									})
-							})
+								})
 						}).then((toReturn) => {
 							// creo que acá tengo que tirar la onda
 							ok = _.flatten(toReturn)
 							return ok.length > 0
-						}).catch((err) => {
-							t.rollback();
-							return err
 						})
-				}).catch((err) => {
-					t.rollback();
-					return err
+						// .catch((err) => {
+						// 	t.rollback();
+						// 	return err
+						// })
 				})
+				// .catch((err) => {
+				// 	t.rollback();
+				// 	return err
+				// })
 		}).catch((err) => {
 			return err
 		})

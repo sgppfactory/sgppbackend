@@ -1,4 +1,6 @@
-model = require('./Model');
+const model = require('./Model');
+// const nodestage = require('./nodestage');
+// NodeStageInstance = NodeStage.getModel()
 
 const Stage =  model.dbsql.define('stage',{
 		id: { 
@@ -62,25 +64,71 @@ const Stage =  model.dbsql.define('stage',{
 	}
 )
 
+const NodeStage = model.dbsql.define('node_stage',{
+	idNode : {
+		type: model.cte.INTEGER
+	,	primaryKey: true
+	, 	field: 'id_node'
+	, 	allowNull: false
+	,	validate: {
+			isInt : {
+				msg: "El campo nodo es incorrecto"
+			}
+		}
+	},
+	idStage : {
+		type: model.cte.INTEGER
+	, 	field: 'id_stage'
+	,	primaryKey: true
+	, 	allowNull: false
+	,	validate: {
+			isInt : {
+				msg: "El campo de etapa es incorrecto"
+			}
+		}
+	}
+}, {
+	tableName: 'node_stage'
+,	timestamps: false
+})
+
+// NodeStage.belongsTo(node.getModel(), {foreignKey: 'idNode', sourceKey: 'id'})
+Stage.hasMany(NodeStage, {foreignKey: 'idStage'})
+// RolInstance.belongsToMany(ActionInstance, { through: {model: ActionRol}, foreignKey: 'id_rol'});
+
 module.exports = {
 	getModel : () => {
 		return Stage
 	}
 ,	create :(params) => {
-		console.log(params)
 		params.dateInit = changeDate(params.dateInit)
 		if (_.isEmpty(params.idNode)) {
 			return Stage.create(params)
 		} else {
-			return model.dbsql.transaction((t) => {
-				return Stage.create(params,{transaction : t})
-					.then((resultStg) => {
-						return NodeStage.create({
-							idNode: params.idNode,
-							idStage: resultStg.dataValues.id,
-						},{transaction : t})
+			return Stage.findAll({
+					attributes: ['id', 'order']
+				,	where: {active: true}
+				,	include: [{
+						model: NodeStage
+					,	where: { idNode: params.idNode }
+					,	attributes: []
+					}]
+				})
+				.then((stages) => {
+					var max_order = _.max(stages, (st) => { 
+						return st.dataValues.order ? 0 : st.dataValues.order; 
+					});
+					return model.dbsql.transaction((t) => {
+						params.order = max_order.dataValues.order ? max_order.dataValues.order + 1 : 1
+						return Stage.create(params, {transaction : t})
+							.then((resultStg) => {
+								return NodeStage.create({
+									idNode: params.idNode,
+									idStage: resultStg.dataValues.id,
+								},{transaction : t})
+							})
 					})
-			})
+				})
 		}
 	}
 ,	get: (idStage) => {
@@ -104,6 +152,17 @@ module.exports = {
 ,	update: (params) => {
 		console.log(params)
 		return Stage.update(params, {where: {id: params.id, active: true}})
+	}
+,	getStageFirstByNode: (idNode) => {
+		return Stage.findAll({
+			attributes: ['id', 'order']
+		,	where: {active: true, order: 1}
+		,	include: [{
+				model: NodeStage
+			,	where: { idNode: idNode }
+			,	attributes: []
+			}]
+		})
 	}
 }
 

@@ -22,6 +22,19 @@ const Cicle =  model.dbsql.define('cicle',{
 				}
 			}
 		}
+	,	idImplementation : {
+			type: model.cte.INTEGER
+		, 	field: 'id_implementation'
+		, 	allowNull: false
+		,	validations : {
+				isInt:{
+					msg: "El campo de implemementación es incorrecto"
+				}
+			}
+		}
+	}, {
+		tableName: 'cicle'
+	,	timestamps: false
 	}
 )
 
@@ -40,6 +53,14 @@ module.exports = {
 	}
 ,	get: id => {
 		return Cicle.findById(id)
+	}
+,	getCurrencyByImplementation: idImpl => {
+		return Cicle.findOne({
+			where: {
+				idImplementation: idImpl
+			,	currency: true
+			}
+		})
 	}
 ,	search: (params) => {
 		// filter:[{key:,value:,operator:}]

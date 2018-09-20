@@ -36,19 +36,11 @@ const Auditory = model.dbsql.define('user_auditory', {
 const ActionRol = model.dbsql.define('action_rol', {
 	idAction: {
 		type:model.cte.INTEGER
-	, 	field: 'id_action' 
-	// ,	references: {
-	// 		model: ActionInstance
-	// 	,	key: 'id'
-	// 	}
+	, 	field: 'id_action'
 	},
 	idRol: {
 		type:model.cte.INTEGER
 	, 	field: 'id_rol'
-	// ,	references: {
-	// 		model: RolInstance
-	// 	,	key: 'id'
-	// 	} 
 	}
 },{
 	tableName: 'action_rol'
@@ -56,9 +48,6 @@ const ActionRol = model.dbsql.define('action_rol', {
 ,	updatedAt : false
 ,	createdAt : false
 })
-
-
-// User.belongsTo(RolInstance, {foreignKey: 'fk_rol_user'});
 
 // RolInstance.hasMany(ActionRol, {sourceKey: 'id_rol', foreignKey: 'id_rol', as: 'actr'})
 // User.hasMany(ActionRol, {foreignKey: 'id_rol', sourceKey: 'id_rol', as: 'actionsRol'})

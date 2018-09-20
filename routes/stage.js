@@ -30,7 +30,7 @@ module.exports = app => {
 		model
 			.create(req.params)
 			.then((result) => {
-				if(result.dataValues) {
+				if(result && result.dataValues) {
 					res.statusCode = 201
 					res.json({
 						"id": result.dataValues.idStage
@@ -39,7 +39,10 @@ module.exports = app => {
 					})
 				} else {
 					res.statusCode = 409
-					res.json({"msg":"Hubo un error al crear la propuesta, inténtelo nuevamente","status":"error"})
+					res.json({
+						"message":"Hubo un error al crear la etapa, inténtelo nuevamente"
+					,	"status":"error"
+					})
 				}
 			},(err) => {
 				res.statusCode = 409

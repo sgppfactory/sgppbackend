@@ -1,9 +1,12 @@
 // const _ = require('underscore'); //Sólamente para tener algunas herramientas más para desarrollar
 // const helper = require("../lib/validations");
-model = require('./Model');
-Node = require('./node');
+const model = require('./Model');
+const Node = require('./node');
+const Stage = require('./stage');
+const Cicle = require('./cicle');
 const search = require('../lib/search');
 const redis = require("../lib/redis"); //Manipulador de la conexión de la BD
+const paramsLib = require('../lib/params');
 var redisDB = new redis(model.config.redis_connect);
 
 const PorposalProject =  model.dbsql.define(
@@ -112,12 +115,42 @@ const PorposalProject =  model.dbsql.define(
 	}
 )
 
+var PersonPorpose = model.dbsql.define('porpose_person',{
+	idPorpose : {
+		type: model.cte.INTEGER
+	, 	field: 'id_porpose_project'
+	,	primaryKey: true
+	, 	allowNull: false
+	,	validate: {
+			isInt : {
+				msg: "El id de propuesta o proyecto es incorrecto"
+			}
+		}
+	}
+,	idPerson : {
+		type: model.cte.INTEGER
+	, 	field: 'id_person'
+	,	primaryKey: true
+	, 	allowNull: false
+	,	validate: {
+			isInt : {
+				msg: "El id de persona es incorrecto"
+			}
+		}
+	}
+}, {
+	tableName: 'person_porpose_project'
+,	timestamps: false
+})
+// NodeStage.belongsTo(node.getModel(), {foreignKey: 'idNode', sourceKey: 'id'})
+
 module.exports = {
 	getModel : () => {
 		return PorposalProject
 	}
 ,	create: (params, token) => {
-		console.log(params)
+		params = paramsLib.purge(params)
+
 		return redisDB
 			.hget('auth:'+token, 'implementation')
 			.then((impldata) => {
@@ -127,7 +160,31 @@ module.exports = {
 						throw "Error al obtener datos de sesión"
 					}
 
-					return PorposalProject.create(params)
+					return Node.getModel()
+						.findOne({where: {idImplementation: impldata.id, id: params.idNode}})
+						.then(resultNode => {
+
+							return Stage.getStageFirstByNode(params.idNode).then((firstStage) => {
+								if (!firstStage[0]) {
+									throw "Error al obtener algunos datos, inténtelo nuevamente"
+								}
+								return Cicle.getCurrencyByImplementation(impldata.id)
+									.then(cicleData => {
+										params.idCicle = cicleData.dataValues.id
+										params.idStage = firstStage[0].dataValues.id
+										return PorposalProject.create(params)
+											.then((porpose) => {
+											// TODO: FALTA ASIGNAR PERSONAS 
+												params.persons = JSON.parse(params.persons)
+												return model.dbsql.Promise.map(params.persons, (ppRet) => {
+													return PersonPorpose.create(
+														{idPerson: ppRet, idPorpose: porpose.dataValues.id}
+													)
+												})
+											})
+									})
+							})
+						})
 				} catch(err) {
 					return err
 				}

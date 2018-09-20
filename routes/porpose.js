@@ -31,7 +31,7 @@ module.exports = function(app) {
 			.create(req.params, req.token)
 			.then((result) => {
 				console.log(result)
-				if(result.dataValues) {
+				if(result) {
 					res.statusCode = 201
 					res.json({
 						"id": result.dataValues.id
@@ -46,6 +46,7 @@ module.exports = function(app) {
 					})
 				}
 			}).catch((err) => {
+				console.log(err)
 				res.statusCode = 409
 				res.json({"message": resultLib.getMsgSeq(err),"status":"error"})
 			})

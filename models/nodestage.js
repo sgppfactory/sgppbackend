@@ -2,7 +2,7 @@ const model = require('./Model');
 // const node = require('./node');
 const Stage = require('./stage');
 
-NodeStage = model.dbsql.define('node_stage',{
+var NodeStage = model.dbsql.define('node_stage',{
 	idNode : {
 		type: model.cte.INTEGER
 	,	primaryKey: true
@@ -50,5 +50,16 @@ module.exports = {
 	}
 ,	findAll: params => { //Necesario para otro endpoint
 		return NodeStage.findAll(params)
+	}
+,	getStageByNode: idNode => {
+		return Stage.findAll({
+			attributes: ['id', 'order']
+		,	where: {active: true}
+		,	include: [{
+				model: NodeStageInstance
+			,	on: {idNode: idNode}
+			,	attributes: []
+			}]
+		})
 	}
 }

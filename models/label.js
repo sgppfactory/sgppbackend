@@ -1,4 +1,3 @@
-
 const model = require('./Model');
 const Stage = require('./stage');
 const Porpose = require('./porpose');
@@ -48,16 +47,12 @@ const Label =  model.dbsql.define('label',{
 	}
 )
 
-NodeStage = model.dbsql.define('label_porpose_project',{
+LabelPorpose = model.dbsql.define('label_porpose_project',{
 	idLabel : {
 		type: model.cte.INTEGER
 	,	primaryKey: true
 	, 	field: 'id_label'
 	, 	allowNull: false
-	// ,	references: {
-	// 		model: Node.getModel()
-	// 	,	key: 'id'
-	// 	}
 	,	validate: {
 			isInt : {
 				msg: "El campo de etiqueta es incorrecto"
@@ -69,10 +64,6 @@ NodeStage = model.dbsql.define('label_porpose_project',{
 	, 	field: 'id_porpose_project'
 	,	primaryKey: true
 	, 	allowNull: false
-	// ,	references: {
-	// 		model: Stage.getModel()
-	// 	,	key: 'id'
-	// 	}
 	,	validate: {
 			isInt : {
 				msg: "El campo de propuesta / proyecto es incorrecto"
@@ -99,12 +90,6 @@ module.exports = {
 		return Label.findOne(id)
 	}
 ,	findAll: (params) => {
-		// filter:[{key:,value:,operator:}]
-		// filter = {}
-		// if(params.filters) {
-		// 	filter.where = params.filters.map
-		// }
-		// return PorposalProject.findAll(filter)
 		return Label.findAll()
 	}
 }
