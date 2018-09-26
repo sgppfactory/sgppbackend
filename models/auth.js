@@ -17,7 +17,10 @@ UserInstance = User.getModel()
 
 const Auditory = model.dbsql.define('user_auditory', {
 	ip: model.cte.STRING,
-	dateHour: model.cte.DATE,
+	dateHour: {
+		type:model.cte.DATE
+	, 	field: 'date_hour'
+	},
 	idUser: {
 		type:model.cte.INTEGER
 	, 	field: 'id_user' 
@@ -118,7 +121,7 @@ module.exports = {
 							.hset('auth:'+token, "userdata", JSON.stringify(userdata))
 							.hset('auth:'+token, "implementation", JSON.stringify(implementation))
 							.hset('auth:'+token, "actions", JSON.stringify(actions))
-							.sadd(
+							.sadd(  //Esto es medio al pedo
 								'loguser:' + userdata.id
 							,	JSON.stringify({
 									ip: ip
@@ -153,5 +156,23 @@ module.exports = {
 					resolve(result)
 				});
 		});
+	}
+,	getLogBySession: (token) => {
+		return new Promise((resolve,reject)=>{
+			redisDB
+				.hget('auth:'+token, 'userdata')
+				.then((result) => {
+					result = JSON.parse(result)
+					if(!result) {
+						reject("Se venció la sesión")
+					}
+
+					Auditory
+						.findAll({where: {idUser: result.id}, limit: 5, order: [['date_hour','DESC']]})
+						.then(resolve).catch(reject)
+					// return redisDB.smembers('loguser:'+result.id)
+					// 			.then()
+				})
+		})
 	}
 }

@@ -47,33 +47,33 @@ const Label =  model.dbsql.define('label',{
 	}
 )
 
-LabelPorpose = model.dbsql.define('label_porpose_project',{
-	idLabel : {
-		type: model.cte.INTEGER
-	,	primaryKey: true
-	, 	field: 'id_label'
-	, 	allowNull: false
-	,	validate: {
-			isInt : {
-				msg: "El campo de etiqueta es incorrecto"
-			}
-		}
-	},
-	idPorposeProject : {
-		type: model.cte.INTEGER
-	, 	field: 'id_porpose_project'
-	,	primaryKey: true
-	, 	allowNull: false
-	,	validate: {
-			isInt : {
-				msg: "El campo de propuesta / proyecto es incorrecto"
-			}
-		}
-	}
-}, {
-	tableName: 'label_porpose_project'
-,	timestamps: false
-})
+// LabelPorpose = model.dbsql.define('label_porpose_project',{
+// 	idLabel : {
+// 		type: model.cte.INTEGER
+// 	,	primaryKey: true
+// 	, 	field: 'id_label'
+// 	, 	allowNull: false
+// 	,	validate: {
+// 			isInt : {
+// 				msg: "El campo de etiqueta es incorrecto"
+// 			}
+// 		}
+// 	},
+// 	idPorposeProject : {
+// 		type: model.cte.INTEGER
+// 	, 	field: 'id_porpose_project'
+// 	,	primaryKey: true
+// 	, 	allowNull: false
+// 	,	validate: {
+// 			isInt : {
+// 				msg: "El campo de propuesta / proyecto es incorrecto"
+// 			}
+// 		}
+// 	}
+// }, {
+// 	tableName: 'label_porpose_project'
+// ,	timestamps: false
+// })
 
 module.exports = {
 	getModel : () => {

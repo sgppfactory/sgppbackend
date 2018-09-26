@@ -19,7 +19,6 @@ UserRoute = function(app){
 		authmodel
 			.getUserBySession(req.token)
 			.then((result) => {
-				// console.log("noerror", result)
 				if(!result) {
 					res.statusCode = 403
 					res.json({"result":"No existe información asociada al usuario"})
@@ -34,23 +33,21 @@ UserRoute = function(app){
 			);
 	});
 
-	app.get('/loguser/:id', function(req, res, next) {
-		// console.log('Request URL: '+req.method+' /loguser/'+req.params.id);
-		redisDB
-			.smembers('loguser:'+req.params.id)
-			.then(
-				(result)=> {
-					// console.log(result,JSON.parse(result))
-					if(!result) {
-						res.json({"msg":"No se encuentran logs de usuarios"})
-					} else {
-						res.json(result)
-					}
+	app.get('/user/log', authLib.ensureAuthenticated, function(req, res, next) {
+		authmodel
+			.getLogBySession(req.token)
+			.then((result)=> {
+				if(!result) {
+					res.statusCode = 403
+					res.json({"message":"No se encuentran logs de usuarios", "status": "error"})
+				} else {
+					res.statusCode = 200
+					res.json({"message":result, "status": "OK"})
 				}
-			, 	(err) => {
-					res.end("Hubo un error en la consulta...")
-				}
-			);
+			}).catch((err) => {
+				res.statusCode = 409
+				res.json({"message":err, "status": "error"})
+			});
 	});
 }
 

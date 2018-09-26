@@ -115,6 +115,14 @@ const PorposalProject =  model.dbsql.define(
 	}
 )
 
+NodeInstance = Node.getModel()
+CicleInstance = Cicle.getModel()
+StageInstance = Stage.getModel()
+
+PorposalProject.hasOne(NodeInstance, {foreignKey: 'id', sourceKey: 'id_node'});
+PorposalProject.hasOne(CicleInstance, {foreignKey: 'id', sourceKey: 'id_cicle'});
+PorposalProject.hasOne(StageInstance, {foreignKey: 'id', sourceKey: 'id_stage'});
+
 var PersonPorpose = model.dbsql.define('porpose_person',{
 	idPorpose : {
 		type: model.cte.INTEGER
@@ -140,6 +148,34 @@ var PersonPorpose = model.dbsql.define('porpose_person',{
 	}
 }, {
 	tableName: 'person_porpose_project'
+,	timestamps: false
+})
+
+LabelPorpose = model.dbsql.define('label_porpose_project',{
+	idLabel : {
+		type: model.cte.INTEGER
+	,	primaryKey: true
+	, 	field: 'id_label'
+	, 	allowNull: false
+	,	validate: {
+			isInt : {
+				msg: "El campo de etiqueta es incorrecto"
+			}
+		}
+	},
+	idPorposeProject : {
+		type: model.cte.INTEGER
+	, 	field: 'id_porpose_project'
+	,	primaryKey: true
+	, 	allowNull: false
+	,	validate: {
+			isInt : {
+				msg: "El campo de propuesta / proyecto es incorrecto"
+			}
+		}
+	}
+}, {
+	tableName: 'label_porpose_project'
 ,	timestamps: false
 })
 // NodeStage.belongsTo(node.getModel(), {foreignKey: 'idNode', sourceKey: 'id'})
@@ -196,7 +232,21 @@ module.exports = {
 ,	findAll: (params) => {
 		let searchObj = new search.Search(params)
 		tosearch = searchObj.getSearch(params)
-		return PorposalProject.findAll()
+		return PorposalProject.findAll(_.extend(
+			tosearch
+		,	{
+				include: [{
+					model: NodeInstance
+				,	attributes: ['name', 'amount']
+				}, {
+					model: StageInstance
+				,	attributes: ['name', 'isProject']
+				}, {
+					model: CicleInstance
+				,	attributes: ['date', 'currency']
+				}]
+			}
+		))
 	}
 ,	count: params => {
 		let searchObj = new search.Search(params)

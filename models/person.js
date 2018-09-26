@@ -137,7 +137,7 @@ module.exports = {
 							}, {transaction: t}
 						).then((resultPerson) => {
 							if (params.withuser == 'true') {
-								password = Math.random() * Date.now()
+								password = parseInt(Math.random() * Date.now()).toString()
 								return UserInstance.create({
 										username: params.email
 									,	password: md5(password).toString()

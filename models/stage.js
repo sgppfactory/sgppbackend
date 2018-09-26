@@ -92,9 +92,7 @@ const NodeStage = model.dbsql.define('node_stage',{
 ,	timestamps: false
 })
 
-// NodeStage.belongsTo(node.getModel(), {foreignKey: 'idNode', sourceKey: 'id'})
 Stage.hasMany(NodeStage, {foreignKey: 'idStage'})
-// RolInstance.belongsToMany(ActionInstance, { through: {model: ActionRol}, foreignKey: 'id_rol'});
 
 module.exports = {
 	getModel : () => {
