@@ -118,7 +118,10 @@ const Person =  model.dbsql.define('person',{
 )
 
 module.exports = {
-	create : params => {
+	getModel : () => {
+		return Person
+	}
+,	create : params => {
 		return model.dbsql.transaction((t) => {
 			return Person
 				.findOne({where: {email: params.email, active: 1}})

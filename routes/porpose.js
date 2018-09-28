@@ -30,7 +30,7 @@ module.exports = function(app) {
 		model
 			.create(req.params, req.token)
 			.then((result) => {
-				console.log(result)
+				// console.log(result)
 				if(result) {
 					res.statusCode = 201
 					res.json({

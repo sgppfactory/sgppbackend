@@ -49,6 +49,36 @@ UserRoute = function(app){
 				res.json({"message":err, "status": "error"})
 			});
 	});
+
+	/**
+	 * @swagger
+	 * path: /user
+	 * operations:
+	 *   -  httpMethod: GET
+	 *      summary: Obtención de datos de un usuario
+	 *      notes: Retorna información del usuario
+	 *      responseClass: Auth
+	 *      nickname: user
+	 *      consumes: 
+	 *        - application/json
+	 */
+	app.get('/user/person',authLib.ensureAuthenticated, function(req, res, next) {
+		authmodel
+			.getPersonBySession(req.token)
+			.then((result) => {
+				if(!result) {
+					res.statusCode = 403
+					res.json({"message":"No existe una persona asociada al usuario", "status": "error"})
+				} else {
+					res.statusCode = 200
+					res.json({'message': result, "status": "OK!"})
+				}
+			},	(err) => {
+					res.statusCode = 409
+					res.json({"message":err, "status": "error"})
+				}
+			);
+	});
 }
 
 module.exports = UserRoute

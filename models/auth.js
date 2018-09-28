@@ -67,7 +67,7 @@ module.exports = {
 		// console.log(md5(userParams.username).toString())
 		if(_.isString(userParams.username) && _.isString(userParams.password)) {
 			return UserInstance.findOne({
-				attributes: ['id', 'username', 'avatar']
+				attributes: ['id', 'username', 'avatar', 'idPerson']
 			,	where: {
 					username: userParams.username
 				,	password: md5(userParams.password).toString()
@@ -170,6 +170,28 @@ module.exports = {
 					Auditory
 						.findAll({where: {idUser: result.id}, limit: 5, order: [['date_hour','DESC']]})
 						.then(resolve).catch(reject)
+					// return redisDB.smembers('loguser:'+result.id)
+					// 			.then()
+				})
+		})
+	}
+,	getPersonBySession: (token) => {
+		return new Promise((resolve,reject)=>{
+			redisDB
+				.hget('auth:'+token, 'userdata')
+				.then((result) => {
+					result = JSON.parse(result)
+					if(!result) {
+						reject("Se venció la sesión")
+					}
+
+					Person.getModel()
+						.findOne({
+							attributes: ['id', 'name', 'lastname', 'email', 'tel', 'cel', 'location', 'dateBirth'], 
+							where: { id: result.idPerson, active: true }
+						}).then(resolve).catch(reject)
+
+							// {where: {idUser: result.id}, limit: 5, order: [['date_hour','DESC']]})
 					// return redisDB.smembers('loguser:'+result.id)
 					// 			.then()
 				})
