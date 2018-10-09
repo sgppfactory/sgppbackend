@@ -135,7 +135,36 @@ module.exports = function(app) {
 	 */
 	app.put('/porpose/:id',authLib.ensureAuthenticated, function(req, res, next) {
 		model
-			.get(req.params.id)
+			.put(req.params)
+			.then((result) => {
+				if(result) {
+					res.statusCode = 200
+					res.json({"message":result,"status":"OK"})
+				} else {
+					res.statusCode = 403
+					res.json({"message":"Propuesta inexistente","status":"error"})
+				}
+			},(err) => {
+				res.statusCode = 409
+				res.json({"message": resultLib.getMsgSeq(err),"status":"error"})
+			})
+	});
+
+	/**
+	 * @swagger
+	 * path: /porpose/:id
+	 * operations:
+	 *   -  httpMethod: PUT
+	 *      summary: Obtención de datos de un usuario
+	 *      notes: Retorna información del usuario
+	 *      responseClass: Auth
+	 *      nickname: porpose
+	 *      consumes: 
+	 *        - application/json
+	 */
+	app.put('/porpose/:id/state',authLib.ensureAuthenticated, function(req, res, next) {
+		model
+			.changeState(req.params)
 			.then((result) => {
 				if(result) {
 					res.statusCode = 200

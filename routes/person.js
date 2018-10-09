@@ -139,4 +139,33 @@ module.exports = app => {
 				res.json({"message": err, "status":"error"})
 			})
 	});
+
+	/**
+	 * @swagger
+	 * path: /person
+	 * operations:
+	 *   -  httpMethod: PUT
+	 *      summary: Borrado lógico de una persona
+	 *      notes: -
+	 *      responseClass: Person
+	 *      nickname: person
+	 *      consumes: 
+	 *        - application/json
+	 */
+	app.put('/person/:id',authLib.ensureAuthenticated, function(req, res, next) {
+		model
+			.put(req.params)
+			.then((result) => {
+				if(result) {
+					res.statusCode = 200
+					res.json({"message":"Persona deshabilitada correctamente", "id": req.params.id ,"status":"OK"})
+				} else {
+					res.statusCode = 403
+					res.json({"msg":"La persona solicitada no existe","status":"error"})
+				}
+			},(err) => {
+				res.statusCode = 409
+				res.json({"message": err, "status":"error"})
+			})
+	});
 }

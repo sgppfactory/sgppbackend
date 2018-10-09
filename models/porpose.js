@@ -208,6 +208,7 @@ module.exports = {
 									.then(cicleData => {
 										params.idCicle = cicleData.dataValues.id
 										params.idStage = firstStage[0].dataValues.id
+										params.type = 1 //tipo 1 es propuesta y 2 es proyecto
 										return PorposalProject.create(params)
 											.then((porpose) => {
 											// TODO: FALTA ASIGNAR PERSONAS 
@@ -267,6 +268,22 @@ module.exports = {
 		}, {
 			where: {
 				id: idPorpose
+			}
+		})
+	}
+,	changeState: params => {
+		if(_.isEmpty(params.id) || _.isEmpty(params.state)) {
+			return Promise((resolve, reject) => {
+				reject("Error de parámetros")
+			})
+		}
+// 'Creado', 'Cancelado', 'Avanzado - Propuesta', 'Proyecto nuevo', 'Avanzado - Proyecto', 'Finalizado'
+		return PorposalProject.update({
+			state: params.state
+		}, {
+			where: {
+				id: idPorpose
+			,	active: false
 			}
 		})
 	}
