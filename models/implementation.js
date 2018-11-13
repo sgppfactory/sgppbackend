@@ -140,15 +140,7 @@ module.exports = {
 							ok = _.flatten(toReturn)
 							return ok.length > 0
 						})
-						// .catch((err) => {
-						// 	t.rollback();
-						// 	return err
-						// })
 				})
-				// .catch((err) => {
-				// 	t.rollback();
-				// 	return err
-				// })
 		}).catch((err) => {
 			return err
 		})
@@ -171,15 +163,13 @@ module.exports = {
 				});
 		});
 	}
-// ,	findBy: params => {
-// 		// filter:[{key:,value:,operator:}]
-// 		// filter = {}
-// 		// if(params.filters) {
-// 		// 	filter.where = params.filters.map
-// 		// }
-// 		// return PorposalProject.findAll(filter)
-// 		return Implementation.findAll(params)
-// 	}
+,	searchStructures: (params, token) => {
+		if (!params.filter) {
+			params.filter = array()
+		}
+		params.filter.push('{"key": "id_parent_node", "value": "NULL", "operator": "is"}')
+		return Node.search(params, token)
+	}
 ,	structures: async token => {
 		return redisDB
 			.hget('auth:'+token, 'implementation')
@@ -195,7 +185,7 @@ module.exports = {
 					}
 				}).then(result => {
 					let structure = genStructure(result)
-					console.log(structure)
+					// console.log(structure)
 					return structure
 				}).catch(err =>{
 					return err
@@ -224,7 +214,7 @@ function genStructure(result) {
 		,  (obj)=>{
 				let data = obj.dataValues
 				data.childrens = genRecursiveNodes(data, result)
-				console.log(data)
+				// console.log(data)
 				return data
 			}
 		)

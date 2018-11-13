@@ -165,7 +165,7 @@ module.exports = app => {
 			.then((result) => {
 				if(result) {
 					res.statusCode = 200
-					res.json({"message":"Nodo dada de baja correctamente","status":"OK"})
+					res.json({"message":"Nodo dado de baja correctamente","status":"OK"})
 				} else {
 					res.statusCode = 403
 					res.json({"message":"Nodo inexistente","status":"error"})

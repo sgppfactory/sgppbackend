@@ -114,23 +114,57 @@ module.exports = {
 				})
 				.then((stages) => {
 					var max_order = _.max(stages, (st) => { 
-						return st.dataValues.order ? 0 : st.dataValues.order; 
+						return st.dataValues.order ? st.dataValues.order : 0; 
 					});
-					return model.dbsql.transaction((t) => {
-						params.order = max_order.dataValues.order ? max_order.dataValues.order + 1 : 1
-						return Stage.create(params, {transaction : t})
-							.then((resultStg) => {
-								return NodeStage.create({
-									idNode: params.idNode,
-									idStage: resultStg.dataValues.id,
-								},{transaction : t})
-							})
-					})
+
+					max_order = max_order.dataValues.order + 1
+
+					if(_.isEmpty(params.order)) {
+						return model.dbsql.transaction((t) => {
+							params.order = max_order
+							return Stage.create(params, {transaction : t})
+								.then((resultStg) => {
+									return NodeStage.create({
+										idNode: params.idNode,
+										idStage: resultStg.dataValues.id,
+									},{transaction : t})
+								})
+						})
+					} else {
+						if (max_order < params.order) {
+							params.order = max_order
+						}
+
+						return model.dbsql.transaction((t) => {
+							return Stage.create(params, {transaction: t})
+								.then((resultStg) => {
+									return NodeStage.create({
+										idNode: params.idNode,
+										idStage: resultStg.dataValues.id,
+									},{transaction : t})
+									.then((ns) => {
+										return model.dbsql.Promise.map(stages, (stage) => {
+											return Stage.update(
+												{order: stage.dataValues.order + 1}
+											, 	{where: {
+													[model.Op.and]: [
+														{id: stage.id}, {active: true}, 
+														{order: {[model.Op.gte]: params.order}} //TODO: Poner mayor a!
+													]
+												}, transaction: t}
+											) 
+										}).then((result) => {
+											return resultStg
+										})
+									})
+								})
+						}) 
+					}
 				})
 		}
 	}
 ,	get: (idStage) => {
-		return Stage.findOne({ where: { id: idStage, active: true }})
+		return Stage.findOne({ where: { id: idStage, active: true }, orderBy: ['order', 'DESC']})
 	}
 ,	delete: idStage => {
 		if(_.isEmpty(idStage)) {
@@ -148,7 +182,6 @@ module.exports = {
 		})
 	}
 ,	update: (params) => {
-		console.log(params)
 		return Stage.update(params, {where: {id: params.id, active: true}})
 	}
 ,	getStageFirstByNode: (idNode) => {

@@ -1,6 +1,9 @@
 const model = require('./Model');
 const Stage = require('./stage');
 const Porpose = require('./porpose');
+const redis = require("../lib/redis");
+const search = require('../lib/search');
+var redisDB = new redis(model.config.redis_connect);
 
 const Label =  model.dbsql.define('label',{
 		id: { 
@@ -80,6 +83,7 @@ module.exports = {
 		return Label
 	}
 ,	create :(params) => {
+		console.log(params)
 		try {
 			return Label.create(params)
 		}catch(err) {
@@ -89,7 +93,26 @@ module.exports = {
 ,	get: (id) => {
 		return Label.findOne(id)
 	}
-,	findAll: (params) => {
-		return Label.findAll()
+,	search: (params, token) => {
+		if(_.isEmpty(token)) {
+			return Promise((resolve, reject) => {
+				reject("Error de parámetros")
+			})
+		}
+
+		return redisDB
+			.hget('auth:' + token, 'implementation')
+			.then((impldata) => {
+				impldata = JSON.parse(impldata)
+				if (!impldata) {
+					throw "Error al obtener datos de sesión"
+				}
+				params.filter.push({"key":"idImplementation","value":impldata.id,"operator_sup":"AND"})
+				
+				let searchObj = new search.Search(params)
+				tosearch = searchObj.getSearch(params)
+
+				return Label.findAll(tosearch)
+			})
 	}
 }

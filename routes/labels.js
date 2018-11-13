@@ -35,20 +35,20 @@ module.exports = function(app) {
 					res.statusCode = 201
 					res.json({
 						"id": result.dataValues.id
-					,	"message":"Propuesta creada correctamente"
+					,	"message":"Etiqueta creada correctamente"
 					,	"status":"OK"
 					})
 				} else {
 					res.statusCode = 409
 					res.json({
-						"message":"Hubo un error al crear la propuesta, inténtelo nuevamente"
+						"message":"Hubo un error al crear la etiqueta, inténtelo nuevamente"
 					,	"status":"error"
 					})
 				}
 			}).catch((err) => {
 				console.log(err)
 				res.statusCode = 409
-				res.json({"message": resultLib.getMsgSeq(err),"status":"error"})
+				res.json({"message": resultLib.getMsgSeq(err), "status": "error"})
 			})
 	});
 
@@ -66,26 +66,15 @@ module.exports = function(app) {
 	 */
 	app.get('/labels',authLib.ensureAuthenticated, function(req, res, next) {
 		model
-			.findAll(req.params)
+			.search(req.params, req.token)
 			.then((result) => {
-				model
-					.count(req.params)
-					.then((resultCount) => {
-						if(result) {
-							res.statusCode = 200
-							res.json({
-								"result": result,
-								"total": resultCount,
-								"pages": (req.params.bypage 
-										? 	parseInt(resultCount / req.params.bypage) + 1
-										: 	parseInt(resultCount / 15) + 1 ),
-								"status": "OK"
-							})
-						} else {
-							res.statusCode = 403
-							res.json({"result":[],"status":"error"})
-						}
-					})
+				if(result) {
+					res.statusCode = 200
+					res.json({"result": result, "status": "OK"})
+				} else {
+					res.statusCode = 403
+					res.json({"result":[],"status":"error"})
+				}
 			},(err) => {
 				res.statusCode = 409
 				res.json({"result": err, "status":"error"})

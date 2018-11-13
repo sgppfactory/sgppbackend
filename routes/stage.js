@@ -33,7 +33,8 @@ module.exports = app => {
 				if(result && result.dataValues) {
 					res.statusCode = 201
 					res.json({
-						"id": result.dataValues.idStage
+						"id": result.dataValues.id
+					,	"order": result.dataValues.order
 					,	"message":"Etapa creada correctamente"
 					,	"status":"OK"
 					})
@@ -45,6 +46,7 @@ module.exports = app => {
 					})
 				}
 			},(err) => {
+				console.log(err)
 				res.statusCode = 409
 				res.json({"message": resultLib.getMsgSeq(err),"status":"error"})
 			})

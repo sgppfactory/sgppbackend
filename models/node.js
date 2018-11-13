@@ -141,9 +141,9 @@ module.exports = {
 							}]
 						, 	where: {idNode: nodeId}
 						}).then((toReturn) => {
-							return _.map(toReturn, (obj) => {
+							return _.sortBy(_.map(toReturn, (obj) => {
 								return obj.dataValues.stage.dataValues
-							})
+							}), 'order')
 						})
 					} else {
 						throw "Nodo desconocido"
@@ -166,7 +166,7 @@ module.exports = {
 				if (!impldata) {
 					throw "Error al obtener datos de sesión"
 				}
-				params.filter.push({"key":"idImplementation","value":impldata.id,"operator":"AND"})
+				params.filter.push({"key":"idImplementation","value":impldata.id,"operator_sup":"AND"})
 				
 				let searchObj = new search.Search(params)
 				tosearch = searchObj.getSearch(params)

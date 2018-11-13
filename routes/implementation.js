@@ -23,7 +23,7 @@ module.exports = function(app) {
 					res.json({"message":result,"status":"OK"})
 				} else {
 					res.statusCode = 403
-					res.json({"message":"Implementation inexistente","status":"error"})
+					res.json({"message":"Implementación inexistente","status":"error"})
 				}
 			},(err) => {
 				res.statusCode = 409
@@ -43,7 +43,7 @@ module.exports = function(app) {
 	 *      consumes: 
 	 *        - application/json
 	 */
-	app.get('/implementation/structure',authLib.ensureAuthenticated, function(req, res, next) {
+	app.get('/implementation/structure', authLib.ensureAuthenticated, function(req, res, next) {
 		model
 			.structures(req.token)
 			.then((result) => {
@@ -52,7 +52,7 @@ module.exports = function(app) {
 					res.json({"message":result,"status":"OK"})
 				} else {
 					res.statusCode = 403
-					res.json({"message":"Implementation inexistente","status":"error"})
+					res.json({"message":"Implementación inexistente","status":"error"})
 				}
 			},(err) => {
 				res.statusCode = 409
@@ -84,6 +84,31 @@ module.exports = function(app) {
 					res.json({"message":"Error al crear la configuración", "status":"error"})
 				}
 			}).catch((err) => {
+				res.statusCode = 409
+				res.json({"message": resultLib.getMsgSeq(err), "status":"error"})
+			})
+	});
+
+	/**
+	 * @swagger
+	 * path: /structure
+	 * operations:
+	 *   -  httpMethod: GET
+	 *      summary: Obtención de datos de las configuraciones de estructuras
+	 *      notes: Retorna estructuras de acuerdo a lo buscado
+	 *      responseClass: Implementation
+	 *      nickname: implementation
+	 *      consumes: 
+	 *        - application/json
+	 */
+	app.get('/structure', authLib.ensureAuthenticated, function(req, res, next) {
+		model
+			.searchStructures(req.params, req.token)
+			.then((result) => {
+				res.statusCode = 200
+				res.json({"message": result, "status": "OK"})
+			}).catch((err) => {
+				console.log(err)
 				res.statusCode = 409
 				res.json({"message": resultLib.getMsgSeq(err), "status":"error"})
 			})
