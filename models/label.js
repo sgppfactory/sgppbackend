@@ -1,6 +1,6 @@
 const model = require('./Model');
 const Stage = require('./stage');
-const Porpose = require('./porpose');
+// const Porpose = require('./porpose');
 const redis = require("../lib/redis");
 const search = require('../lib/search');
 var redisDB = new redis(model.config.redis_connect);
@@ -39,8 +39,18 @@ const Label =  model.dbsql.define('label',{
 		, 	allowNull: true
 		,	validations : {
 				len: {
-					msg: "El nombre tiene un límite máximo de 45 caracteres"
+					msg: "La definición del color tiene un límite máximo de 45 caracteres"
 				,	args : [0,45]
+				}
+			}
+		}
+	,	idImplementation : {
+			type: model.cte.INTEGER
+		, 	field: 'id_implementation'
+		, 	allowNull: false
+		,	validations : {
+				notEmpty:{
+					msg: "La implementación es requerida"
 				}
 			}
 		}
@@ -82,16 +92,32 @@ module.exports = {
 	getModel : () => {
 		return Label
 	}
-,	create :(params) => {
-		console.log(params)
-		try {
-			return Label.create(params)
-		}catch(err) {
-			console.log(err)
+// ,	getModelRelational : () => {
+// 		return LabelPorpose
+// 	}
+,	create: (params, token) => {
+		if (_.isEmpty(token) || _.isEmpty(params)) {
+			return Promise((resolve, reject) => {
+				reject("Error de parámetros")
+			})
 		}
+
+		console.log(params)
+		return redisDB
+			.hget('auth:' + token, 'implementation')
+			.then((impldata) => {
+				impldata = JSON.parse(impldata)
+				if (!impldata) {
+					throw "Error al obtener datos de sesión"
+				}
+				params.idImplementation = impldata.id
+				params.active = true
+
+				return Label.create(params)
+			})
 	}
 ,	get: (id) => {
-		return Label.findOne(id)
+		return Label.findById(id)
 	}
 ,	search: (params, token) => {
 		if(_.isEmpty(token)) {
@@ -107,7 +133,12 @@ module.exports = {
 				if (!impldata) {
 					throw "Error al obtener datos de sesión"
 				}
-				params.filter.push({"key":"idImplementation","value":impldata.id,"operator_sup":"AND"})
+				let filter = {"key": "idImplementation", "value": impldata.id, "operator_sup": "AND"}
+				if (params.filter) {
+					params.filter.push(filter)
+				} else {
+					params.filter = [filter]
+				}
 				
 				let searchObj = new search.Search(params)
 				tosearch = searchObj.getSearch(params)

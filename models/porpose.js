@@ -3,7 +3,9 @@
 const model = require('./Model');
 const Node = require('./node');
 const Stage = require('./stage');
+const Label = require('./label');
 const Cicle = require('./cicle');
+const Person = require('./person');
 const search = require('../lib/search');
 const redis = require("../lib/redis"); //Manipulador de la conexión de la BD
 const paramsLib = require('../lib/params');
@@ -118,6 +120,8 @@ const PorposalProject =  model.dbsql.define(
 NodeInstance = Node.getModel()
 CicleInstance = Cicle.getModel()
 StageInstance = Stage.getModel()
+PersonInstance = Person.getModel()
+LabelInstance = Label.getModel()
 
 PorposalProject.hasOne(NodeInstance, {foreignKey: 'id', sourceKey: 'id_node'});
 PorposalProject.hasOne(CicleInstance, {foreignKey: 'id', sourceKey: 'id_cicle'});
@@ -178,6 +182,9 @@ LabelPorpose = model.dbsql.define('label_porpose_project',{
 	tableName: 'label_porpose_project'
 ,	timestamps: false
 })
+
+LabelPorpose.hasOne(LabelInstance, {foreignKey: 'id', sourceKey: 'id_label'});
+PersonPorpose.hasOne(PersonInstance, {foreignKey: 'id', sourceKey: 'id_person'});
 // NodeStage.belongsTo(node.getModel(), {foreignKey: 'idNode', sourceKey: 'id'})
 
 module.exports = {
@@ -186,11 +193,11 @@ module.exports = {
 	}
 ,	create: (params, token) => {
 		params = paramsLib.purge(params)
-
-		return redisDB
-			.hget('auth:'+token, 'implementation')
-			.then((impldata) => {
-				try {
+		console.log(params)
+		return model.dbsql.transaction((t) => {
+			return redisDB
+				.hget('auth:'+token, 'implementation')
+				.then((impldata) => {
 					impldata = JSON.parse(impldata)
 					if (!impldata) {
 						throw "Error al obtener datos de sesión"
@@ -199,36 +206,72 @@ module.exports = {
 					return Node.getModel()
 						.findOne({where: {idImplementation: impldata.id, id: params.idNode}})
 						.then(resultNode => {
-
+							console.log(resultNode)
 							return Stage.getStageFirstByNode(params.idNode).then((firstStage) => {
 								if (!firstStage[0]) {
 									throw "Error al obtener algunos datos, inténtelo nuevamente"
 								}
-								return Cicle.getCurrencyByImplementation(impldata.id)
-									.then(cicleData => {
-										params.idCicle = cicleData.dataValues.id
-										params.idStage = firstStage[0].dataValues.id
-										params.type = 1 //tipo 1 es propuesta y 2 es proyecto
-										return PorposalProject.create(params)
-											.then((porpose) => {
-											// TODO: FALTA ASIGNAR PERSONAS 
-												params.persons = JSON.parse(params.persons)
-												return model.dbsql.Promise.map(params.persons, (ppRet) => {
-													return PersonPorpose.create(
-														{idPerson: ppRet, idPorpose: porpose.dataValues.id}
+
+								return Cicle.getCurrencyByImplementation(impldata.id).then(cicleData => {
+									params.idCicle = cicleData.dataValues.id
+									params.idStage = firstStage[0].dataValues.id
+									params.type = 1 //tipo 1 es propuesta y 2 es proyecto
+									return PorposalProject.create(params, {transaction: t})
+										.then((porpose) => {
+											params.persons = JSON.parse(params.persons)
+											params.tags = JSON.parse(params.tags)
+											return model.dbsql.Promise.map(params.persons, ppRet => {
+												return PersonPorpose.create(
+													{idPerson: ppRet, idPorpose: porpose.dataValues.id}
+												, 	{transaction: t}
+												)
+											}).then(pp => {
+												return model.dbsql.Promise.map(params.tags, tRet => {
+													return LabelPorpose.create(
+														{idLabel: tRet, idPorpose: porpose.dataValues.id}
+													, 	{transaction: t}
 													)
 												})
 											})
+										})
 									})
 							})
 						})
-				} catch(err) {
-					return err
-				}
-			})
+				})
+		})
 	}
-,	get: (id) => {
-		return PorposalProject.findOne(id)
+,	get: (id, token) => {
+		return redisDB
+			.hget('auth:'+token, 'implementation')
+			.then(impldata => {
+				return PorposalProject.findOne({id: id, active: true})
+					.then(pp => {
+						porpose = _.clone(pp.dataValues)
+						return LabelPorpose.findAll({
+								include: [{
+									model: Label.getModel()
+								, 	attributes: ['id', 'name', 'colour']
+								,	where: {active: true} //No voy a incluir el id de implementación (?)
+								}]
+							, 	where: {idPorposeProject: porpose.id}
+							}).then(labels => {
+								return PersonPorpose.findAll({
+										include: [{
+											model: Person.getModel()
+										, 	attributes: ['id', 'name', 'lastname', 'email']
+										,	where: {active: true}
+										}]
+									, 	where: {idPorpose: porpose.id}
+									}).then(persons => {
+										// TODO: ver esto después
+										porpose.labels = labels 
+										porpose.persons = persons
+										console.log(porpose)
+										return porpose
+									})
+							})
+					})
+			})
 	}
 ,	findAll: (params) => {
 		let searchObj = new search.Search(params)

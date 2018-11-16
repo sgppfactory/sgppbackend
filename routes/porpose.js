@@ -46,7 +46,7 @@ module.exports = function(app) {
 					})
 				}
 			}).catch((err) => {
-				console.log(err)
+				// console.log(err)
 				res.statusCode = 409
 				res.json({"message": resultLib.getMsgSeq(err),"status":"error"})
 			})
@@ -66,7 +66,7 @@ module.exports = function(app) {
 	 */
 	app.get('/porpose/:id',authLib.ensureAuthenticated, function(req, res, next) {
 		model
-			.get(req.params.id)
+			.get(req.params.id, req.token)
 			.then((result) => {
 				if(result) {
 					res.statusCode = 200
@@ -76,8 +76,9 @@ module.exports = function(app) {
 					res.json({"msg":"Propuesta inexistente","status":"error"})
 				}
 			},(err) => {
+				console.log(err)
 				res.statusCode = 409
-				res.json({"message":err,"status":"error"})
+				res.json({"message": resultLib.getMsgSeq(err),"status": "error"})
 			})
 	});
 

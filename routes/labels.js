@@ -26,7 +26,7 @@ module.exports = function(app) {
 	 *          required: true
 	 *          dataType: string
 	 */
-	app.post('/labels',authLib.ensureAuthenticated, function(req, res, next) {
+	app.post('/labels', authLib.ensureAuthenticated, function(req, res, next) {
 		model
 			.create(req.params, req.token)
 			.then((result) => {
@@ -54,17 +54,17 @@ module.exports = function(app) {
 
 	/**
 	 * @swagger
-	 * path: /porpose
+	 * path: /labels
 	 * operations:
 	 *   -  httpMethod: GET
-	 *      summary: Obtención de datos de un usuario
-	 *      notes: Retorna información del usuario
+	 *      summary: Obtención de labels
+	 *      notes: Retorna información de las etiquetas
 	 *      responseClass: Auth
-	 *      nickname: porpose
+	 *      nickname: labels
 	 *      consumes: 
 	 *        - application/json
 	 */
-	app.get('/labels',authLib.ensureAuthenticated, function(req, res, next) {
+	app.get('/labels', authLib.ensureAuthenticated, function(req, res, next) {
 		model
 			.search(req.params, req.token)
 			.then((result) => {
@@ -73,11 +73,12 @@ module.exports = function(app) {
 					res.json({"result": result, "status": "OK"})
 				} else {
 					res.statusCode = 403
-					res.json({"result":[],"status":"error"})
+					res.json({"result":[], "status":"error"})
 				}
 			},(err) => {
+				console.log(err)
 				res.statusCode = 409
-				res.json({"result": err, "status":"error"})
+				res.json({"result": resultLib.getMsgSeq(err), "status":"error"})
 			})
 	});
 }
