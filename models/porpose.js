@@ -2,6 +2,7 @@
 // const helper = require("../lib/validations");
 const model = require('./Model');
 const Node = require('./node');
+const NodeStage = require('./nodestage');
 const Stage = require('./stage');
 const Label = require('./label');
 const Cicle = require('./cicle');
@@ -39,10 +40,10 @@ const PorposalProject =  model.dbsql.define(
 			,	isInt : {
 					msg: "El campo nodo es incorrecto"
 				}
-			,	unique : value => {
+			// ,	unique : value => {
 
-					// msg: "El campo nodo es incorrecto"
-				}
+			// 		// msg: "El campo nodo es incorrecto"
+			// 	}
 			}
 		,	references: {
 				model: Node.getModel()
@@ -123,9 +124,12 @@ StageInstance = Stage.getModel()
 PersonInstance = Person.getModel()
 LabelInstance = Label.getModel()
 
-PorposalProject.hasOne(NodeInstance, {foreignKey: 'id', sourceKey: 'id_node'});
-PorposalProject.hasOne(CicleInstance, {foreignKey: 'id', sourceKey: 'id_cicle'});
-PorposalProject.hasOne(StageInstance, {foreignKey: 'id', sourceKey: 'id_stage'});
+PorposalProject.belongsTo(CicleInstance, {foreignKey: 'id_cicle'});
+PorposalProject.belongsTo(NodeInstance, {foreignKey: 'id_node'});
+PorposalProject.belongsTo(StageInstance, {foreignKey: 'id_stage'});
+// PorposalProject.hasOne(NodeInstance, {foreignKey: 'id', sourceKey: 'id_node'});
+// PorposalProject.hasOne(CicleInstance, {foreignKey: 'id', sourceKey: 'id_cicle'});
+// PorposalProject.hasOne(StageInstance, {foreignKey: 'id', sourceKey: 'id_stage'});
 
 var PersonPorpose = model.dbsql.define('porpose_person',{
 	idPorpose : {
@@ -134,7 +138,10 @@ var PersonPorpose = model.dbsql.define('porpose_person',{
 	,	primaryKey: true
 	, 	allowNull: false
 	,	validate: {
-			isInt : {
+			notNull:{
+				msg: "El id de propuesta o proyecto es requerido"
+			}
+		,	isInt : {
 				msg: "El id de propuesta o proyecto es incorrecto"
 			}
 		}
@@ -145,7 +152,10 @@ var PersonPorpose = model.dbsql.define('porpose_person',{
 	,	primaryKey: true
 	, 	allowNull: false
 	,	validate: {
-			isInt : {
+			notNull:{
+				msg: "El id de persona es requerido"
+			}
+		,	isInt : {
 				msg: "El id de persona es incorrecto"
 			}
 		}
@@ -162,7 +172,10 @@ LabelPorpose = model.dbsql.define('label_porpose_project',{
 	, 	field: 'id_label'
 	, 	allowNull: false
 	,	validate: {
-			isInt : {
+			notNull:{
+				msg: "El campo de etiqueta es requerido"
+			}
+		,	isInt : {
 				msg: "El campo de etiqueta es incorrecto"
 			}
 		}
@@ -173,7 +186,10 @@ LabelPorpose = model.dbsql.define('label_porpose_project',{
 	,	primaryKey: true
 	, 	allowNull: false
 	,	validate: {
-			isInt : {
+			notNull:{
+				msg: "El campo de propuesta / proyecto es requerido"
+			}
+		,	isInt : {
 				msg: "El campo de propuesta / proyecto es incorrecto"
 			}
 		}
@@ -183,9 +199,8 @@ LabelPorpose = model.dbsql.define('label_porpose_project',{
 ,	timestamps: false
 })
 
-LabelPorpose.hasOne(LabelInstance, {foreignKey: 'id', sourceKey: 'id_label'});
-PersonPorpose.hasOne(PersonInstance, {foreignKey: 'id', sourceKey: 'id_person'});
-// NodeStage.belongsTo(node.getModel(), {foreignKey: 'idNode', sourceKey: 'id'})
+LabelPorpose.belongsTo(LabelInstance, {foreignKey: 'id_label'});
+PersonPorpose.belongsTo(PersonInstance, {foreignKey: 'id_person'});
 
 module.exports = {
 	getModel : () => {
@@ -193,7 +208,7 @@ module.exports = {
 	}
 ,	create: (params, token) => {
 		params = paramsLib.purge(params)
-		console.log(params)
+		// console.log(params)
 		return model.dbsql.transaction((t) => {
 			return redisDB
 				.hget('auth:'+token, 'implementation')
@@ -206,8 +221,12 @@ module.exports = {
 					return Node.getModel()
 						.findOne({where: {idImplementation: impldata.id, id: params.idNode}})
 						.then(resultNode => {
-							console.log(resultNode)
+							resultNode = resultNode.dataValues
+							if (!resultNode) {
+								throw "El nodo seleccionado no existe"
+							}
 							return Stage.getStageFirstByNode(params.idNode).then((firstStage) => {
+								console.log(firstStage[0])
 								if (!firstStage[0]) {
 									throw "Error al obtener algunos datos, inténtelo nuevamente"
 								}
@@ -227,10 +246,13 @@ module.exports = {
 												)
 											}).then(pp => {
 												return model.dbsql.Promise.map(params.tags, tRet => {
+													// console.log(params.tags, tRet)
 													return LabelPorpose.create(
-														{idLabel: tRet, idPorpose: porpose.dataValues.id}
+														{idLabel: tRet.id, idPorposeProject: porpose.dataValues.id}
 													, 	{transaction: t}
 													)
+												}).then(lp => {
+													return porpose
 												})
 											})
 										})
@@ -244,7 +266,7 @@ module.exports = {
 		return redisDB
 			.hget('auth:'+token, 'implementation')
 			.then(impldata => {
-				return PorposalProject.findOne({id: id, active: true})
+				return PorposalProject.findOne({where:{ id: id, active: true}})
 					.then(pp => {
 						porpose = _.clone(pp.dataValues)
 						return LabelPorpose.findAll({
@@ -264,8 +286,12 @@ module.exports = {
 									, 	where: {idPorpose: porpose.id}
 									}).then(persons => {
 										// TODO: ver esto después
-										porpose.labels = labels 
-										porpose.persons = persons
+										porpose.labels = _.map(labels , label => {
+											return label.dataValues.label
+										})
+										porpose.persons = _.map(persons, pers => {
+											return pers.dataValues.person
+										})
 										console.log(porpose)
 										return porpose
 									})
@@ -281,10 +307,10 @@ module.exports = {
 		,	{
 				include: [{
 					model: NodeInstance
-				,	attributes: ['name', 'amount']
+				,	attributes: ['name', 'amount', 'active']
 				}, {
 					model: StageInstance
-				,	attributes: ['name', 'isProject']
+				,	attributes: ['name', 'isProject', 'active']
 				}, {
 					model: CicleInstance
 				,	attributes: ['date', 'currency']
@@ -320,14 +346,104 @@ module.exports = {
 				reject("Error de parámetros")
 			})
 		}
-// 'Creado', 'Cancelado', 'Avanzado - Propuesta', 'Proyecto nuevo', 'Avanzado - Proyecto', 'Finalizado'
-		return PorposalProject.update({
-			state: params.state
-		}, {
-			where: {
-				id: idPorpose
-			,	active: false
-			}
-		})
+
+		// 'Creado', 'Cancelado', 'Avanzado - Propuesta', 'Proyecto nuevo', 'Avanzado - Proyecto', 'Finalizado'
+		return PorposalProject.findOne({where: {id: params.id, active: true}}).then(pp => {
+				porpose = _.clone(pp.dataValues)
+				var toUpdate = {}
+				if (porpose.type == 1) {
+					if ((porpose.state == "Creado" || porpose.state == "Avanzado - Propuesta") 
+						&& params.state == "advance") {
+						return NodeStage.getStageByNode(porpose.id_node).then(psteps => {
+							let nexstage = ''
+							for (x = 0; psteps.length > x; x++) {
+								if (psteps[x].dataValues.stage.dataValues.id == porpose.id_stage) {
+									nexstage = psteps[x + 1].dataValues.stage.dataValues
+									break;
+								}
+							}
+
+							// Acá se debe preguntar si la etapa es del tipo proyecto y así hacer el cambio
+							if (nexstage.is_project) {
+								toUpdate = {
+									state: "Proyecto nuevo",
+									idStage: nexstage.id,
+									type: 2
+								}
+							} else {
+								toUpdate = {
+									state: "Avanzado - Propuesta",
+									idStage: nexstage.id
+								}
+							}
+
+							return PorposalProject.update(toUpdate, {
+								where: {id: params.id, active: true}
+							}).then(result => {
+								if (result && result[0]) {
+									return {id: params.id, state: params.state}
+								} else {
+									throw "No se pudo modificar la Propuesta."
+								}
+							})
+						})
+					} else if (params.state == "delete") {
+						toUpdate = {state: "Cancelado", active: false}
+					} else {
+						throw "Error al actualizar Propuesta"
+					}
+				} else if (porpose.type == 2) {
+					if ((porpose.state == "Proyecto nuevo" || porpose.state == "Avanzado - Proyecto") 
+						&& params.state == "notify") {
+						return ProjectStep.create(_.extend({
+							idPorposeProject: porpose.id
+						}, params.advance)).then(pstep => {
+							return PorposalProject.update({
+								state: "Avanzado - Proyecto"
+							}, {
+								where: {
+									id: params.id
+								,	active: true
+								}
+							}).then(result => {
+								if (result && result[0]) {
+									return {id: params.id, state: params.state}
+								} else {
+									throw "Error al modificar la Propuesta o Proyecto."
+								}
+							})	
+						})
+					} else if (params.state == "delete") {
+						toUpdate = {state: "Cancelado", active: false}
+					} else if (params.state == "final") {
+						toUpdate = {state: "Finalizado"}
+					} else {
+						throw "Error al actualizar Proyecto"
+					}
+				} else {
+					throw "Error al actualizar Propuesta / Proyecto"
+				}
+				
+				return PorposalProject.update(toUpdate, {
+					where: {
+						id: params.id
+					,	active: true
+					}
+				}).then(result => {
+					if (result && result[0]) {
+						return {id: params.id, state: params.state}
+					} else {
+						throw "Error al modificar la Propuesta o Proyecto."
+					}
+				})
+			})
+	}
+,	put: (params, token) => {
+		console.log(params)
+		if(_.isEmpty(params.id)) {
+			throw "Parámetros incorrectos"
+		}
+
+		return PorposalProject.update(params, {where: {id: params.id, active: true}})
 	}
 }

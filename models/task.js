@@ -55,6 +55,10 @@ const Task =  model.dbsql.define('task',{
 				}
 			}
 		}
+	,	active : {
+			type: model.cte.BOOLEAN
+		,	defaultValue : true
+		}
 	},{
 		tableName: 'task'
 	,	timestamps: false

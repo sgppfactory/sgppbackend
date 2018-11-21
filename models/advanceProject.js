@@ -70,7 +70,7 @@ module.exports = {
 	getModel : () => {
 		return ProjectStep
 	}
-,	create :(params) => {
+,	create: params => {
 		return ProjectStep.create(params)
 	}
 ,	get: id => {
@@ -79,12 +79,12 @@ module.exports = {
 ,	findAll: params => {
 		let searchObj = new search.Search(params)
 		tosearch = searchObj.getSearch(params)
-		return Task.findAll(tosearch)
+		return ProjectStep.findAll(tosearch)
 	}
 ,	count: params => {
 		let searchObj = new search.Search(params)
 		filter = searchObj.buildFilter(params.filter)
-		return 	Task.count({
+		return 	ProjectStep.count({
 			where: filter
 		})
 	}

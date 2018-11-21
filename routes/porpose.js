@@ -46,7 +46,7 @@ module.exports = function(app) {
 					})
 				}
 			}).catch((err) => {
-				// console.log(err)
+				console.log(err)
 				res.statusCode = 409
 				res.json({"message": resultLib.getMsgSeq(err),"status":"error"})
 			})
@@ -136,11 +136,11 @@ module.exports = function(app) {
 	 */
 	app.put('/porpose/:id',authLib.ensureAuthenticated, function(req, res, next) {
 		model
-			.put(req.params)
+			.put(req.params, req.token)
 			.then((result) => {
 				if(result) {
 					res.statusCode = 200
-					res.json({"message":result,"status":"OK"})
+					res.json({"message": "Propuesta modificada correctamente", "status": "OK"})
 				} else {
 					res.statusCode = 403
 					res.json({"message":"Propuesta inexistente","status":"error"})
@@ -164,19 +164,26 @@ module.exports = function(app) {
 	 *        - application/json
 	 */
 	app.put('/porpose/:id/state',authLib.ensureAuthenticated, function(req, res, next) {
+		console.log(req.params)
 		model
-			.changeState(req.params)
+			.changeState(req.params) //req.token es necesario para controlar el permiso del usuario
 			.then((result) => {
 				if(result) {
 					res.statusCode = 200
-					res.json({"message":result,"status":"OK"})
+					res.json({
+						"id": result.id
+					,	"state": result.state
+					,	"message": "Cambio de estado realizado correctamente"
+					, 	"status": "OK"
+					})
 				} else {
 					res.statusCode = 403
-					res.json({"message":"Propuesta inexistente","status":"error"})
+					res.json({"message": "Propuesta inexistente", "status": "error"})
 				}
 			},(err) => {
+				console.log(err)
 				res.statusCode = 409
-				res.json({"message": resultLib.getMsgSeq(err),"status":"error"})
+				res.json({"message": resultLib.getMsgSeq(err), "status": "error"})
 			})
 	});
 }

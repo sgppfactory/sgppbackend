@@ -52,14 +52,16 @@ module.exports = {
 		return NodeStage.findAll(params)
 	}
 ,	getStageByNode: idNode => {
-		return Stage.findAll({
-			attributes: ['id', 'order']
-		,	where: {active: true}
+		return NodeStage.findAll({
+			attributes: []
+		,	where: {id_node: idNode}
 		,	include: [{
-				model: NodeStageInstance
-			,	on: {idNode: idNode}
-			,	attributes: []
+				model: Stage.getModel()
+			// ,	on: {id_node: idNode}
+			,	attributes: ['id', 'order']
+			,	where: {active: true}
 			}]
+		,	order: [[Stage.getModel(), 'order', 'ASC']] // Ordenados por orden
 		})
 	}
 }
