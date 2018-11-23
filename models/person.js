@@ -240,6 +240,45 @@ module.exports = {
 			}
 		})
 	}
+,	put: (params) => {
+		if(_.isEmpty(params.id)) {
+			throw "Parámetros incorrectos"
+		}
+		return model.dbsql.transaction((t) => {
+			return Person
+				.findOne({where: {email: params.email, active: true}})
+				.then((aPerson) => {
+					if (aPerson) {
+						throw "Ya existe una persona con el mismo email ingresado."
+					} else {
+						return PorposalProject.update(
+							params, 
+							{where: {id: params.id, active: true}},
+							{transaction: t}
+						).then(updateResult => {
+							params.persons = JSON.parse(params.persons)
+							params.tags = JSON.parse(params.tags)
+							return PersonPorpose.destroy({
+								where: {
+									idPerson: {[Op.in]: params.persons}, 
+									idPorpose: params.id
+								}
+							}, {transaction: t}).then(ppdestroy => {
+								console.log(ppdestroy)
+								return LabelPorpose.destroy({
+									where: {
+										idPerson: {[Op.in]: params.tags}, 
+										idPorpose: params.id
+									}
+								}, {transaction: t}).then(lpdestroy => {
+									
+								})
+							})
+						})
+					}
+				})
+		})
+	}
 }
 
 module.exports.Person = Person

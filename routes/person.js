@@ -158,7 +158,7 @@ module.exports = app => {
 			.then((result) => {
 				if(result) {
 					res.statusCode = 200
-					res.json({"message":"Persona deshabilitada correctamente", "id": req.params.id ,"status":"OK"})
+					res.json({"message":"Persona modificada correctamente", "id": req.params.id ,"status":"OK"})
 				} else {
 					res.statusCode = 403
 					res.json({"msg":"La persona solicitada no existe","status":"error"})

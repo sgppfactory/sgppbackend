@@ -443,7 +443,52 @@ module.exports = {
 		if(_.isEmpty(params.id)) {
 			throw "Parámetros incorrectos"
 		}
+		return model.dbsql.transaction((t) => {
+			return PorposalProject.update(
+				params, 
+				{where: {id: params.id, active: true}},
+				{transaction: t}
+			).then(updateResult => {
+				if (!updateResult) {
+					throw "No puedo ser modificada la propuesta, inténtelo nuevamente más tarde."
+				}
+				params.persons = JSON.parse(params.persons)
+				params.tags = JSON.parse(params.tags)
+				return PersonPorpose.destroy({
+					where: {
+						idPerson: {[Op.in]: params.persons}, 
+						idPorpose: params.id
+					}
+				}, {transaction: t}).then(ppdestroy => {
+					console.log(ppdestroy)
+					return LabelPorpose.destroy({
+						where: {
+							idPerson: {[Op.in]: params.tags}, 
+							idPorpose: params.id
+						}
+					}, {transaction: t}).then(lpdestroy => {
+						console.log(lpdestroy)
+						return model.dbsql.Promise.map(params.persons, ppRet => {
+							return PersonPorpose.create(
+								{idPerson: ppRet, idPorpose: porpose.dataValues.id}
+							, 	{transaction: t}
+							)
+						}).then(pp => {
+							return model.dbsql.Promise.map(params.tags, tRet => {
+								// console.log(params.tags, tRet)
+								return LabelPorpose.create(
+									{idLabel: tRet.id, idPorposeProject: porpose.dataValues.id}
+								, 	{transaction: t}
+								)
+							}).then(lp => {
+								return updateResult
+							})
+						})
+					})
+				})
 
-		return PorposalProject.update(params, {where: {id: params.id, active: true}})
+
+			})
+		})
 	}
 }
