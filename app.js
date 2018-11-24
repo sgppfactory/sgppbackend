@@ -26,9 +26,7 @@ if (process.env.NODE_ENV === 'production') {
 	})
 }
 
-const app = restify.createServer({
-	name: 'sgppApi'
-});
+const app = restify.createServer(config);
 
 app.pre((req,res,next) => {
 	console.log('Request URL: ' + req.method + ' ' + req.url);
