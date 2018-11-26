@@ -92,9 +92,6 @@ module.exports = {
 	getModel : () => {
 		return Label
 	}
-// ,	getModelRelational : () => {
-// 		return LabelPorpose
-// 	}
 ,	create: (params, token) => {
 		if (_.isEmpty(token) || _.isEmpty(params)) {
 			return Promise((resolve, reject) => {
@@ -102,7 +99,6 @@ module.exports = {
 			})
 		}
 
-		console.log(params)
 		return redisDB
 			.hget('auth:' + token, 'implementation')
 			.then((impldata) => {

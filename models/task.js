@@ -96,15 +96,11 @@ module.exports = {
 	getModel : () => {
 		return Task
 	}
-,	create :params => {
-		// return new Promise((resolve, reject) => {
+,	create: params => {
 		return Task.create(params)
-				.then((task) => {
-					// resolve(task)
-				}).catch((err) => {
-					// reject(err)
-				})
-		// })
+			.then((task) => {
+				return task
+			})
 	}
 ,	get: id => {
 		return Task.findById(id)

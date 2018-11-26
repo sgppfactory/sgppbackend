@@ -251,29 +251,55 @@ module.exports = {
 					if (aPerson) {
 						throw "Ya existe una persona con el mismo email ingresado."
 					} else {
-						return PorposalProject.update(
+						return Person.update(
 							params, 
 							{where: {id: params.id, active: true}},
 							{transaction: t}
 						).then(updateResult => {
-							params.persons = JSON.parse(params.persons)
-							params.tags = JSON.parse(params.tags)
-							return PersonPorpose.destroy({
-								where: {
-									idPerson: {[Op.in]: params.persons}, 
-									idPorpose: params.id
-								}
-							}, {transaction: t}).then(ppdestroy => {
-								console.log(ppdestroy)
-								return LabelPorpose.destroy({
-									where: {
-										idPerson: {[Op.in]: params.tags}, 
-										idPorpose: params.id
-									}
-								}, {transaction: t}).then(lpdestroy => {
-									
+							if (!updateResult[0]){
+								throw "Error al actualizar a la persona seleccionada. Inténtelo nuevamente.";
+							}
+							return UserInstance.findOne({
+									attributes: ['id', 'username', 'idRol'],
+									where: {idPerson: params.id, active: true}
+								}).then((resultUser) => {
+									console.log(resultUser)
+									throw ""
+									// resultUser.dataValues
+									if (params.withuser == 'true' && resultUser.dataValues) {
+										password = parseInt(Math.random() * Date.now()).toString()
+										return UserInstance.create({
+												username: params.email
+											,	password: md5(password).toString()
+											,	idRol: params.rol
+											,	firstLogin: false
+											,	idPerson: resultPerson.get('id')
+											}, {transaction: t}
+										).then((resultUser) => {
+											return transporter.sendMail(
+												_.extend(
+													mailOptions
+												,	{
+														html: htmlBody
+															.replace("{{username}}", params.email)
+															.replace("{{pass}}", password)
+													,	to: params.email
+													}
+												)
+											,	(error, info) => {
+													if (error) {
+														throw "No se pudo enviar el mail";
+													} else {
+														return resultPerson
+													}
+												}
+											)
+										}).catch((err) => {
+											t.rollback()
+											return err
+										})
+									} 
 								})
-							})
 						})
 					}
 				})

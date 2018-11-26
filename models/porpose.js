@@ -5,7 +5,9 @@ const Node = require('./node');
 const NodeStage = require('./nodestage');
 const Stage = require('./stage');
 const Label = require('./label');
+const ProjectStep = require('./advanceProject');
 const Cicle = require('./cicle');
+const Task = require('./task');
 const Person = require('./person');
 const search = require('../lib/search');
 const redis = require("../lib/redis"); //Manipulador de la conexión de la BD
@@ -226,7 +228,6 @@ module.exports = {
 								throw "El nodo seleccionado no existe"
 							}
 							return Stage.getStageFirstByNode(params.idNode).then((firstStage) => {
-								console.log(firstStage[0])
 								if (!firstStage[0]) {
 									throw "Error al obtener algunos datos, inténtelo nuevamente"
 								}
@@ -236,7 +237,7 @@ module.exports = {
 									params.idStage = firstStage[0].dataValues.id
 									params.type = 1 //tipo 1 es propuesta y 2 es proyecto
 									return PorposalProject.create(params, {transaction: t})
-										.then((porpose) => {
+										.then(porpose => {
 											params.persons = JSON.parse(params.persons)
 											params.tags = JSON.parse(params.tags)
 											return model.dbsql.Promise.map(params.persons, ppRet => {
@@ -246,13 +247,17 @@ module.exports = {
 												)
 											}).then(pp => {
 												return model.dbsql.Promise.map(params.tags, tRet => {
-													// console.log(params.tags, tRet)
-													return LabelPorpose.create(
-														{idLabel: tRet.id, idPorposeProject: porpose.dataValues.id}
-													, 	{transaction: t}
-													)
+													if (tRet.id) {
+														return LabelPorpose.create(
+															{idLabel: tRet.id, idPorposeProject: porpose.dataValues.id}
+														, 	{transaction: t}
+														)
+													} 
+													throw "Etiqueta incorrecta, seleccione otra etiqueta."
 												}).then(lp => {
-													return porpose
+													return Task.create().then(task => {
+														return porpose
+													})
 												})
 											})
 										})
@@ -292,6 +297,23 @@ module.exports = {
 										porpose.persons = _.map(persons, pers => {
 											return pers.dataValues.person
 										})
+										// Del tipo proyecto? traigo la data de los avances
+										if (porpose.type === 2) {
+											var params = {}
+											params.filter = [{
+												key: 'id_porpose_project', 
+												value: porpose.id, 
+												operator: '=', 
+												operator_sup: 'AND'
+											}]
+											return ProjectStep.findAll(params)
+												.then(steps => {
+													porpose.project_steps = _.map(steps, step => {
+														return step.dataValues
+													})
+													return porpose
+												})
+										}
 										console.log(porpose)
 										return porpose
 									})
@@ -362,7 +384,6 @@ module.exports = {
 									break;
 								}
 							}
-
 							// Acá se debe preguntar si la etapa es del tipo proyecto y así hacer el cambio
 							if (nexstage.is_project) {
 								toUpdate = {
@@ -439,45 +460,52 @@ module.exports = {
 			})
 	}
 ,	put: (params, token) => {
-		console.log(params)
 		if(_.isEmpty(params.id)) {
 			throw "Parámetros incorrectos"
 		}
 		return model.dbsql.transaction((t) => {
 			return PorposalProject.update(
-				params, 
+				{
+					title: params.title, 
+					idNode: params.idNode, 
+					details: params.details, 
+					location: params.location, 
+					amount: params.amount
+				}, 
 				{where: {id: params.id, active: true}},
 				{transaction: t}
 			).then(updateResult => {
-				if (!updateResult) {
+				if (!updateResult[0]) {
 					throw "No puedo ser modificada la propuesta, inténtelo nuevamente más tarde."
 				}
 				params.persons = JSON.parse(params.persons)
 				params.tags = JSON.parse(params.tags)
 				return PersonPorpose.destroy({
 					where: {
-						idPerson: {[Op.in]: params.persons}, 
+						idPerson: {[model.Op.in]: params.persons}, 
 						idPorpose: params.id
 					}
 				}, {transaction: t}).then(ppdestroy => {
-					console.log(ppdestroy)
+					var tagsId = _.map(params.tags, (tag) => {
+						return tag.id
+					})
 					return LabelPorpose.destroy({
 						where: {
-							idPerson: {[Op.in]: params.tags}, 
-							idPorpose: params.id
+							idLabel: {[model.Op.in]: tagsId}, 
+							idPorposeProject: params.id
 						}
 					}, {transaction: t}).then(lpdestroy => {
-						console.log(lpdestroy)
+						// console.log(lpdestroy)
 						return model.dbsql.Promise.map(params.persons, ppRet => {
 							return PersonPorpose.create(
-								{idPerson: ppRet, idPorpose: porpose.dataValues.id}
+								{idPerson: ppRet, idPorpose: params.id}
 							, 	{transaction: t}
 							)
 						}).then(pp => {
 							return model.dbsql.Promise.map(params.tags, tRet => {
 								// console.log(params.tags, tRet)
 								return LabelPorpose.create(
-									{idLabel: tRet.id, idPorposeProject: porpose.dataValues.id}
+									{idLabel: tRet.id, idPorposeProject: params.id}
 								, 	{transaction: t}
 								)
 							}).then(lp => {

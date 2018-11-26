@@ -30,23 +30,21 @@ module.exports = function(app) {
 		model
 			.create(req.params, req.token)
 			.then((result) => {
-				// console.log(result)
 				if(result) {
 					res.statusCode = 201
 					res.json({
 						"id": result.dataValues.id
-					,	"message":"Etiqueta creada correctamente"
-					,	"status":"OK"
+					,	"message": "Etiqueta creada correctamente"
+					,	"status": "OK"
 					})
 				} else {
 					res.statusCode = 409
 					res.json({
-						"message":"Hubo un error al crear la etiqueta, inténtelo nuevamente"
-					,	"status":"error"
+						"message": "Hubo un error al crear la etiqueta, inténtelo nuevamente"
+					,	"status": "error"
 					})
 				}
 			}).catch((err) => {
-				console.log(err)
 				res.statusCode = 409
 				res.json({"message": resultLib.getMsgSeq(err), "status": "error"})
 			})

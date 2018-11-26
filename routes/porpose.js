@@ -145,7 +145,8 @@ module.exports = function(app) {
 					res.statusCode = 403
 					res.json({"message":"Propuesta inexistente","status":"error"})
 				}
-			},(err) => {
+			}, (err) => {
+				console.log(err)
 				res.statusCode = 409
 				res.json({"message": resultLib.getMsgSeq(err),"status":"error"})
 			})

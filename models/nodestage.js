@@ -58,7 +58,7 @@ module.exports = {
 		,	include: [{
 				model: Stage.getModel()
 			// ,	on: {id_node: idNode}
-			,	attributes: ['id', 'order']
+			,	attributes: ['id', 'order', 'is_project']
 			,	where: {active: true}
 			}]
 		,	order: [[Stage.getModel(), 'order', 'ASC']] // Ordenados por orden
