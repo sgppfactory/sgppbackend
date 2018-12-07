@@ -4,16 +4,12 @@ const search = require('../lib/search');
 const ProjectStep =  model.dbsql.define('advanceProject',{
 		id: { type: model.cte.INTEGER, primaryKey: true, autoIncrement: true }
 	,	idPorposeProject : {
-			type: model.cte.STRING
+			type: model.cte.INTEGER
 		, 	field: 'id_porpose_project'
 		,	allowNull : false
 		, 	validate: {
 				notNull: {
-					msg: "El nombre es requerido"
-				}
-			,	len: {
-					msg: "El nombre tiene un límite máximo de 100 caracteres"
-				,	args : [0,100]
+					msg: "El ID de propuesta / proyecto es requerido"
 				}
 			}
 		}
@@ -21,25 +17,15 @@ const ProjectStep =  model.dbsql.define('advanceProject',{
 			type: model.cte.FLOAT
 		,	allowNull : false
 		, 	validate: {
-				isFloat: {
-					msg: "El monto debe tener un formato de moneda del tipo XXXX.XX"
+				notNull: {
+					msg: "El porcentaje es requerido"
+				}
+			,	isFloat: {
+					msg: "El monto debe tener un formato de porcentaje del tipo XX.YY"
 				}
 			,	max: {
 					args: 100.00
-				,	msg:"El monto tiene un límite máximo de 15 dígitos" 
-				}
-			}
-		}
-	,	dateInit : {
-			type: model.cte.DATE
-		, 	allowNull: false
-		,	field: 'date_init'
-		, 	validate: {
-				notNull: {
-					msg: "La fecha de comienzo es requerida"
-				}
-			,	isDate: {
-					msg: "El formato de la fecha de inicio debe ser DD-MM-YYYY o DD/MM/YYYY"
+				,	msg:"El monto tiene un límite máximo de 100%" 
 				}
 			}
 		}
@@ -62,7 +48,9 @@ const ProjectStep =  model.dbsql.define('advanceProject',{
 		}
 	},{
 		tableName: 'advance_project'
-	,	timestamps: false
+	,	timestamps: true
+	,	updatedAt : false
+	,	createdAt: 'created_at'
 	}
 )
 
@@ -78,11 +66,13 @@ module.exports = {
 	}
 ,	findAll: params => {
 		let searchObj = new search.Search(params)
+		searchObj.withActive = false
 		tosearch = searchObj.getSearch(params)
 		return ProjectStep.findAll(tosearch)
 	}
 ,	count: params => {
 		let searchObj = new search.Search(params)
+		searchObj.withActive = false
 		filter = searchObj.buildFilter(params.filter)
 		return 	ProjectStep.count({
 			where: filter

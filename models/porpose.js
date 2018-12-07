@@ -416,23 +416,53 @@ module.exports = {
 				} else if (porpose.type == 2) {
 					if ((porpose.state == "Proyecto nuevo" || porpose.state == "Avanzado - Proyecto") 
 						&& params.state == "notify") {
-						return ProjectStep.create(_.extend({
-							idPorposeProject: porpose.id
-						}, params.advance)).then(pstep => {
-							return PorposalProject.update({
-								state: "Avanzado - Proyecto"
-							}, {
-								where: {
-									id: params.id
-								,	active: true
-								}
-							}).then(result => {
-								if (result && result[0]) {
-									return {id: params.id, state: params.state}
-								} else {
-									throw "Error al modificar la Propuesta o Proyecto."
-								}
-							})	
+						// params.advance.percent = params.advance.percent
+						if (params.advance.percent >= 100) {
+							throw "Porcentaje debe ser menor a 100%"
+						}
+
+						if (params.advance.mount >= porpose.mount) {
+							throw "Porcentaje incorrecto"
+						}
+
+						return ProjectStep.findAll({
+							filter: [{key: 'id_porpose_project', value: porpose.id, operator: '=', operator_sup: 'AND'}]
+						}).then(projectSteps => {
+							console.log(projectSteps)
+							var percentAcum = 0
+							var acountAcum = 0 
+
+							_.each(projectSteps, (item, index) => {
+								percentAcum += item.dataValues.percent
+								acountAcum += item.dataValues.amount
+							})
+							params.advance = JSON.parse(params.advance)
+
+							if (percentAcum + params.advance.percent >= 100) {
+								throw "El porcentaje supera al 100%"
+							}
+							// No voy a validar excedentes de monto
+							// if (acountAcum + params.advance.mount >= porpose.mount) {
+							// 	throw "El monto supera el monto total del proyecto"
+							// }
+							return ProjectStep.create(_.extend({
+								idPorposeProject: porpose.id
+							}, params.advance)).then(pstep => {
+								return PorposalProject.update({
+									state: "Avanzado - Proyecto"
+								}, {
+									where: {
+										id: params.id
+									,	active: true
+									}
+								}).then(result => {
+									if (result && result[0]) {
+										return {id: params.id, state: params.state}
+									} else {
+										throw "Error al modificar la Propuesta o Proyecto."
+									}
+								})	
+							})
 						})
 					} else if (params.state == "delete") {
 						toUpdate = {state: "Cancelado", active: false}
