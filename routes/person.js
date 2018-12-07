@@ -29,14 +29,17 @@ module.exports = app => {
 		model
 			.create(req.params)
 			.then((result) => {
-				if(result.dataValues) {
+				if(result) {
 					res.statusCode = 201
 					res.json({"result": result.get('id'),"message":"Persona creada correctamente","status":"OK"})
 				} else {
 					res.statusCode = 409
-					res.json({"message": resultLib.getMsgSeq(result),"status":"error"})
+					res.json({
+						"message":"Hubo un error al crear a la persona, inténtelo nuevamente",
+						"status":"error"
+					})
 				}
-			}).catch((err) => {
+			}).catch((err) =>
 				res.statusCode = 409
 				res.json({"message": resultLib.getMsgSeq(err), "status":"error"})
 			})

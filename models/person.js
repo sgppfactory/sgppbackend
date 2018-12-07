@@ -167,9 +167,6 @@ module.exports = {
 											}
 										}
 									)
-								}).catch((err) => {
-									t.rollback()
-									return err
 								})
 							} 
 
@@ -179,10 +176,6 @@ module.exports = {
 				}).catch((err) => {
 					return err
 				})
-		}).then((result) => {
-			return result
-		}).catch((err) => {
-			return err
 		})
 	}
 ,	get: idPerson => {

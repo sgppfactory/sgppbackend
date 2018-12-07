@@ -7,6 +7,20 @@ const Task =  model.dbsql.define('task',{
 		, 	primaryKey: true
 		, 	autoIncrement: true 
 		}
+	,	title : {
+			type: model.cte.DATE
+		, 	allowNull: false
+		, 	field: 'date_hour'
+		,	validations : {
+				len: {
+					msg: "El Título tiene un límite máximo de 255 caracteres"
+				,	args : [0,255]
+				}
+			,	notEmpty:{
+					msg: "El título es requerido"
+				}
+			}
+		}
 	,	notes : {
 			type: model.cte.TEXT
 		, 	allowNull: true
@@ -37,7 +51,7 @@ const Task =  model.dbsql.define('task',{
 		}
 	,	idPorposeProject : {
 			type: model.cte.INTEGER
-		, 	allowNull: false
+		, 	allowNull: true
 		, 	field: 'id_porpose_project'
 		,	validations : {
 				isInt:{
@@ -52,6 +66,9 @@ const Task =  model.dbsql.define('task',{
 		,	validations : {
 				isInt:{
 					msg: "El nodo debe ser un valor entero"
+				}
+			,	notEmpty:{
+					msg: "El nodo es requerido"
 				}
 			}
 		}
