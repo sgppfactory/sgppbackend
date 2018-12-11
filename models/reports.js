@@ -55,14 +55,6 @@ module.exports = {
 		return Report
 	}
 ,	create :params => {
-		// return new Promise((resolve, reject) => {
-		// 	Report.create(params)
-		// 		.then((stage) => {
-		// 			resolve(stage)
-		// 		}).catch((err) => {
-		// 			reject(err)
-		// 		})
-		// })
 		return Report.create(params)
 			.then((stage) => {
 				resolve(stage)

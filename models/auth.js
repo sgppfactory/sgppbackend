@@ -64,7 +64,6 @@ ActionInstance.belongsToMany(RolInstance, { through: {model: ActionRol}, foreign
 
 module.exports = {
 	login: (userParams) => {
-		// console.log(md5(userParams.username).toString())
 		if(_.isString(userParams.username) && _.isString(userParams.password)) {
 			return UserInstance.findOne({
 				attributes: ['id', 'username', 'avatar', 'idPerson']
@@ -153,7 +152,7 @@ module.exports = {
 				.hget('auth:'+token, 'userdata')
 				.then((result,err) => {
 					if(err) return reject(err)
-					resolve(result)
+					resolve(JSON.parse(result))
 				});
 		});
 	}

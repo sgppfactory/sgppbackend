@@ -1,17 +1,15 @@
-// const _ = require('underscore'); //Sólamente para tener algunas herramientas más para desarrollar
-// const helper = require("../lib/validations");
-const model = require('./Model');
-const Node = require('./node');
-const NodeStage = require('./nodestage');
-const Stage = require('./stage');
-const Label = require('./label');
-const ProjectStep = require('./advanceProject');
-const Cicle = require('./cicle');
-const Task = require('./task');
-const Person = require('./person');
-const search = require('../lib/search');
-const redis = require("../lib/redis"); //Manipulador de la conexión de la BD
-const paramsLib = require('../lib/params');
+var model = require('./Model');
+var Node = require('./node');
+var NodeStage = require('./nodestage');
+var Stage = require('./stage');
+var Label = require('./label');
+var ProjectStep = require('./advanceProject');
+var Cicle = require('./cicle');
+var Task = require('./task');
+var Person = require('./person');
+var search = require('../lib/search');
+var redis = require("../lib/redis"); //Manipulador de la conexión de la BD
+var paramsLib = require('../lib/params');
 var redisDB = new redis(model.config.redis_connect);
 
 const PorposalProject =  model.dbsql.define(
@@ -42,10 +40,6 @@ const PorposalProject =  model.dbsql.define(
 			,	isInt : {
 					msg: "El campo nodo es incorrecto"
 				}
-			// ,	unique : value => {
-
-			// 		// msg: "El campo nodo es incorrecto"
-			// 	}
 			}
 		,	references: {
 				model: Node.getModel()
@@ -129,9 +123,6 @@ LabelInstance = Label.getModel()
 PorposalProject.belongsTo(CicleInstance, {foreignKey: 'id_cicle'});
 PorposalProject.belongsTo(NodeInstance, {foreignKey: 'id_node'});
 PorposalProject.belongsTo(StageInstance, {foreignKey: 'id_stage'});
-// PorposalProject.hasOne(NodeInstance, {foreignKey: 'id', sourceKey: 'id_node'});
-// PorposalProject.hasOne(CicleInstance, {foreignKey: 'id', sourceKey: 'id_cicle'});
-// PorposalProject.hasOne(StageInstance, {foreignKey: 'id', sourceKey: 'id_stage'});
 
 var PersonPorpose = model.dbsql.define('porpose_person',{
 	idPorpose : {
@@ -205,7 +196,7 @@ LabelPorpose.belongsTo(LabelInstance, {foreignKey: 'id_label'});
 PersonPorpose.belongsTo(PersonInstance, {foreignKey: 'id_person'});
 
 module.exports = {
-	getModel : () => {
+	getModel: () => {
 		return PorposalProject
 	}
 ,	create: (params, token) => {
@@ -271,6 +262,13 @@ module.exports = {
 		return redisDB
 			.hget('auth:'+token, 'implementation')
 			.then(impldata => {
+				impldata = JSON.parse(impldata)
+				if (!impldata) {
+					throw "Error al obtener datos de sesión"
+				}
+				// return Node.getModel()
+				// 	.findOne({where: {idImplementation: impldata.id, id: params.idNode}})
+				// 	.then(resultNode => {
 				return PorposalProject.findOne({where:{ id: id, active: true}})
 					.then(pp => {
 						porpose = _.clone(pp.dataValues)
@@ -314,7 +312,6 @@ module.exports = {
 													return porpose
 												})
 										}
-										console.log(porpose)
 										return porpose
 									})
 							})
@@ -428,7 +425,7 @@ module.exports = {
 						return ProjectStep.findAll({
 							filter: [{key: 'id_porpose_project', value: porpose.id, operator: '=', operator_sup: 'AND'}]
 						}).then(projectSteps => {
-							console.log(projectSteps)
+							// console.log(projectSteps)
 							var percentAcum = 0
 							var acountAcum = 0 
 

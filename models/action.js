@@ -78,6 +78,9 @@ module.exports = {
 	}
 ,	findMenu: (token) => {
 		return redisDB.hget('auth:'+token, "actions")
+			.then(result => {
+				return JSON.parse(result)
+			})
 	}
 }
 

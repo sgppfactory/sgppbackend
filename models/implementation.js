@@ -159,7 +159,7 @@ module.exports = {
 				.hget('auth:'+token, 'implementation')
 				.then((result, err) => {
 					if(err) return reject(err)
-					resolve(result)
+					resolve(JSON.parse(result))
 				});
 		});
 	}

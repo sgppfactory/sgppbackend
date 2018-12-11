@@ -1,5 +1,6 @@
 const model = require('../models/task');
 const authLib = require('../lib/auth'); //Librería para manejar la autenticación
+const resultLib = require('../lib/result');
 
 module.exports = app => {
 	/**
@@ -37,7 +38,7 @@ module.exports = app => {
 				}
 			},(err) => {
 				res.statusCode = 409
-				res.json({"message":err,"status":"error"})
+				res.json({"message": resultLib.getMsgSeq(err),"status":"error"})
 			})
 	});
 	 
@@ -65,8 +66,9 @@ module.exports = app => {
 					res.json({"msg":"La tarea solicitada no existe","status":"error"})
 				}
 			},(err) => {
+				console.log(err)
 				res.statusCode = 409
-				res.json({"message": err, "status":"error"})
+				res.json({"message": resultLib.getMsgSeq(err), "status":"error"})
 			})
 	});
 
@@ -122,7 +124,7 @@ module.exports = app => {
 					})
 			},(err) => {
 				res.statusCode = 409
-				res.json({"result": err, "status":"error"})
+				res.json({"result": resultLib.getMsgSeq(err), "status":"error"})
 			})
 	});
 }

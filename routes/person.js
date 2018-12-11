@@ -31,17 +31,21 @@ module.exports = app => {
 			.then((result) => {
 				if(result) {
 					res.statusCode = 201
-					res.json({"result": result.get('id'),"message":"Persona creada correctamente","status":"OK"})
+					res.json({
+						"result": result.get('id'), 
+						"message": "Persona creada correctamente",
+						"status":"OK"
+					})
 				} else {
 					res.statusCode = 409
 					res.json({
-						"message":"Hubo un error al crear a la persona, inténtelo nuevamente",
-						"status":"error"
+						"message": "Hubo un error al crear a la persona, inténtelo nuevamente",
+						"status": "error"
 					})
 				}
 			}).catch((err) => {
-				res.statusCode1 = 409
-				res.json({"message": resultLib.getMsgSeq(err), "status":"error"})
+				res.statusCode = 409
+				res.json({"message": resultLib.getMsgSeq(err), "status": "error"})
 			})
 	});
 	 
