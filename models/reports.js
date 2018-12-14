@@ -1,5 +1,8 @@
 model = require('./Model');
 const search = require('../lib/search');
+const redis = require("../lib/redis"); //Manipulador de la conexión de la BD
+const Porpose = require("./porpose"); //Manipulador de la conexión de la BD
+var redisDB = new redis(model.config.redis_connect);
 
 const Report =  model.dbsql.define('report',{
 		id: { 
@@ -10,7 +13,7 @@ const Report =  model.dbsql.define('report',{
 	,	title : {
 			type: model.cte.STRING
 		, 	allowNull: false
-		,	validations : {
+		,	validations: {
 				notEmpty:{
 					msg: "El nombre es requerido"
 				}
@@ -24,7 +27,7 @@ const Report =  model.dbsql.define('report',{
 			type: model.cte.INTEGER
 		, 	allowNull: false
 		, 	field: 'id_user'
-		,	validations : {
+		,	validations: {
 				isInt:{
 					msg: "Debe ser un valor entero"
 				}
@@ -38,43 +41,118 @@ const Report =  model.dbsql.define('report',{
 			type: model.cte.BOOLEAN
 		, 	allowNull: false
 		, 	defaultValue: true
-		,	validations : {
+		,	validations: {
 				isBoolean:{
 					msg: "El campo activo debe ser 'true' o 'false'"
 				}
 			}
 		}
+	,	idImplementation : {
+			type: model.cte.INTEGER
+		, 	allowNull: false
+		, 	field: 'id_implementation'
+		,	validations: {
+				notEmpty:{
+					msg: "La implementación es requerida"
+				}
+			,	isInt:{
+					msg: "Debe ser un valor entero"
+				}
+			}
+		}
 	},{
 		tableName: 'reports'
-	,	timestamps: false
+	,	timestamps: true
 	}
 )
 
 module.exports = {
-	getModel : () => {
+	getModel: () => {
 		return Report
 	}
-,	create :params => {
-		return Report.create(params)
-			.then((stage) => {
-				resolve(stage)
-			}).catch((err) => {
-				reject(err)
+,	create: (params, token) => {
+		return redisDB
+			.hget('auth:'+token, 'implementation')
+			.then(impldata => {	
+				if (!impldata) {
+					throw "Error al obtener datos de sesión"
+				}
+				impldata = JSON.parse(impldata)
+				return Report.create(_.extend(params, {idImplementation: impldata.id}))
 			})
 	}
-,	get: id => {
-		return Report.findOne(id)
+,	get: (id, token) => {
+		return redisDB
+			.hget('auth:'+token, 'implementation')
+			.then(impldata => {	
+				if (!impldata) {
+					throw "Error al obtener datos de sesión"
+				}
+				impldata = JSON.parse(impldata)
+				return redisReport.findOne({where: {id: id, active: true}})
+			})
 	}
-,	findAll: params => {
-		let searchObj = new search.Search(params)
-		tosearch = searchObj.getSearch(params)
-		return Report.findAll(tosearch)
+,	findAll: (params, token) => {
+		return redisDB
+			.hget('auth:'+token, 'implementation')
+			.then(impldata => {	
+				if (!impldata) {
+					throw "Error al obtener datos de sesión"
+				}
+				impldata = JSON.parse(impldata)
+				if (params.filter) {
+					params.filter = []
+				}
+				params.filter.push({
+					value: impldata.id, 
+					key: "id_implementation", 
+					operator: "=", 
+					operator_sup: "AND"
+				})
+				let searchObj = new search.Search(params)
+				tosearch = searchObj.getSearch(params)
+				return Report.findAll(tosearch)
+			})
 	}
-,	count: params => {
-		let searchObj = new search.Search(params)
-		filter = searchObj.buildFilter(params.filter)
-		return 	Report.count({
-			where: filter
-		})
+,	count: (params, token) => {
+		return redisDB
+			.hget('auth:'+token, 'implementation')
+			.then(impldata => {	
+				if (!impldata) {
+					throw "Error al obtener datos de sesión"
+				}
+				impldata = JSON.parse(impldata)
+				let searchObj = new search.Search(params)
+				if (params.filter) {
+					params.filter = []
+				}
+				params.filter.push({
+					value: impldata.id, 
+					key: "id_implementation", 
+					operator: "=", 
+					operator_sup: "AND"
+				})
+				filter = searchObj.buildFilter(params.filter)
+				return 	Report.count({
+					where: filter
+				})
+			})
+	}
+,	generate: (params, token) => {
+		return redisDB
+			.hget('auth:'+token, 'implementation')
+			.then(impldata => {	
+				if (!impldata) {
+					throw "Error al obtener datos de sesión"
+				}
+				impldata = JSON.parse(impldata)
+				console.log(params)
+				if (params.porpose) {
+					return Porpose.findAll()
+				}
+				if (params.project) {
+					return Porpose.findAll()	
+				}
+			})
 	}
 }

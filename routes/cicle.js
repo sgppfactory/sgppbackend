@@ -1,5 +1,6 @@
 const model = require('../models/cicle');
 const authLib = require('../lib/auth'); //Librería para manejar la autenticación
+const resultLib = require('../lib/result');
 
 module.exports = app => {
 	/**
@@ -38,7 +39,7 @@ module.exports = app => {
 				}
 			},(err) => {
 				res.statusCode = 409
-				res.json({"message":err,"status":"error"})
+				res.json({"message": resultLib.getMsgSeq(err),"status":"error"})
 			})
 	});
 	 
@@ -54,21 +55,21 @@ module.exports = app => {
 	 *      consumes: 
 	 *        - application/json
 	 */
-	app.get('/cicle',authLib.ensureAuthenticated, function(req, res, next) {
-		console.log(req.params)
+	app.get('/cicles', authLib.ensureAuthenticated, function(req, res, next) {
+		// console.log(req.params)
 		model
-			.get(req.params)
+			.search(req.params, req.token)
 			.then((result) => {
 				if(result) {
 					res.statusCode = 200
 					res.json({"message":result,"status":"OK"})
 				} else {
 					res.statusCode = 403
-					res.json({"msg":"Ciclo inexistente","status":"error"})
+					res.json({"msg":"Ciclos inexistentes","status":"error"})
 				}
 			},(err) => {
 				res.statusCode = 409
-				res.json({"message":err,"status":"error"})
+				res.json({"message": resultLib.getMsgSeq(err),"status":"error"})
 			})
 	});
 }

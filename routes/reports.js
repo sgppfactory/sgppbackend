@@ -1,4 +1,5 @@
 const model = require('../models/reports');
+const resultLib = require('../lib/result');
 const authLib = require('../lib/auth'); //Librería para manejar la autenticación
 
 module.exports = app => {
@@ -33,10 +34,10 @@ module.exports = app => {
 	 */
 	app.get('/reports',authLib.ensureAuthenticated, function(req, res, next) {
 		model
-			.findAll(req.params)
+			.findAll(req.params, req.token)
 			.then((result) => {
 				model
-					.count(req.params)
+					.count(req.params, req.token)
 					.then((resultCount) => {
 						if(result) {
 							res.statusCode = 200
@@ -53,9 +54,9 @@ module.exports = app => {
 							res.json({"result":[],"status":"error"})
 						}
 					})
-			},(err) => {
+			}).catch(err => {
 				res.statusCode = 409
-				res.json({"result": err, "status":"error"})
+				res.json({"message": resultLib.getMsgSeq(err), "status":"error"})
 			})
 	});
 
@@ -73,13 +74,73 @@ module.exports = app => {
 	 */
 	app.get('/reports/:id',authLib.ensureAuthenticated, function(req, res, next) {
 		model
-			.get(req.token)
+			.get(req.params.id, req.token)
 			.then((result) => {
 				res.statusCode = 200
 				res.json({"message":result,"status":"OK"})
-			},(err) => {
+			}).catch(err => {
 				res.statusCode = 409
-				res.json({"message": err, "status":"error"})
+				res.json({"message": resultLib.getMsgSeq(err), "status":"error"})
+			})
+	});
+
+	/**
+	 * @swagger
+	 * path: /reports/try
+	 * operations:
+	 *   -  httpMethod: GET
+	 *      summary: Buscador de reportes
+	 *      notes: Retorna información de nodos por filtros aplicados
+	 *      responseClass: Node
+	 *      nickname: node
+	 *      consumes: 
+	 *        - application/json
+	 */
+	app.get('/reports/try', authLib.ensureAuthenticated, function(req, res, next) {
+		model
+			.generate(req.params, req.token)
+			.then((result) => {
+				res.statusCode = 200
+				res.json({"message": result,"status": "OK"})
+			}).catch(err => {
+				res.statusCode = 409
+				res.json({"message": resultLib.getMsgSeq(err), "status": "error"})
+			})
+	});
+
+	/**
+	 * @swagger
+	 * path: /reports
+	 * operations:
+	 *   -  httpMethod: POST
+	 *      summary: Buscador de reportes
+	 *      notes: Retorna información de nodos por filtros aplicados
+	 *      responseClass: Node
+	 *      nickname: node
+	 *      consumes: 
+	 *        - application/json
+	 */
+	app.post('/reports', authLib.ensureAuthenticated, function(req, res, next) {
+		model
+			.create(req.params, req.token)
+			.then((result) => {
+				if (result) {
+					res.statusCode = 201
+					res.json({
+						"id": result, 
+						"message": "Reporte guardado correctamente",
+						"status": "OK"
+					})
+				} else {
+					res.statusCode = 403
+					res.json({
+						"message": "Hubo un error al crear el reporte, inténtelo nuevamente más tarde", 
+						"status":"error"
+					})	
+				}
+			}).catch(err => {
+				res.statusCode = 409
+				res.json({"message": resultLib.getMsgSeq(err), "status": "error"})
 			})
 	});
 }

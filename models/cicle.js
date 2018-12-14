@@ -1,6 +1,6 @@
-// const _ = require('underscore'); //Sólamente para tener algunas herramientas más para desarrollar
-// const helper = require("../lib/validations");
 model = require('./Model');
+const redis = require("../lib/redis"); //Manipulador de la conexión de la BD
+var redisDB = new redis(model.config.redis_connect);
 
 const Cicle =  model.dbsql.define('cicle',{
 		id: { 
@@ -42,14 +42,8 @@ module.exports = {
 	getModel : () => {
 		return Cicle
 	}
-,	create :(params) => {
-		try {
-			return Cicle.create(params)
-		}catch(err) {
-			return new Promise((resolve, reject)=>{
-				reject(err)
-			})
-		}
+,	create: params => {
+		return Cicle.create(params)
 	}
 ,	get: id => {
 		return Cicle.findById(id)
@@ -62,13 +56,15 @@ module.exports = {
 			}
 		})
 	}
-,	search: (params) => {
-		// filter:[{key:,value:,operator:}]
-		// filter = {}
-		// if(params.filters) {
-		// 	filter.where = params.filters.map
-		// }
-		// return PorposalProject.findAll(filter)
-		return Cicle.findAll()
+,	search: (params, token) => {
+		return redisDB
+			.hget('auth:'+token, 'implementation')
+			.then(impldata => {	
+				if (!impldata) {
+					throw "Error al obtener datos de sesión"
+				}
+				impldata = JSON.parse(impldata)
+				return Cicle.findAll({where: {idImplementation: impldata.id}})
+			})
 	}
 }

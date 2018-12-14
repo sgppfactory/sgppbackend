@@ -46,7 +46,7 @@ module.exports = function(app) {
 					})
 				}
 			}).catch((err) => {
-				console.log(err)
+				// console.log(err)
 				res.statusCode = 409
 				res.json({"message": resultLib.getMsgSeq(err),"status":"error"})
 			})
@@ -165,7 +165,6 @@ module.exports = function(app) {
 	 *        - application/json
 	 */
 	app.put('/porpose/:id/state',authLib.ensureAuthenticated, function(req, res, next) {
-		console.log(req.params)
 		model
 			.changeState(req.params) //req.token es necesario para controlar el permiso del usuario
 			.then((result) => {
