@@ -33,7 +33,7 @@ module.exports = function(app){
 	app.post('/auth', function(req, res, next) {
 		authmodel
 			.login(req.body)
-			.then((result) => {
+			.then(result => {
 				if(result) {
 					//Capturo el token
 					var token = authLib.generateToken(JSON.stringify(result.dataValues));
@@ -41,23 +41,19 @@ module.exports = function(app){
 					
 					authmodel
 						.saveSession(token, result.dataValues, payload, req.connection.remoteAddress)
-						.then(
-							(resultRedis) => {
-								res.json({"jwt": token, "msg": "Succesfully"});
-							}
-						,	(err) => {
-								res.statusCode = 401
-								res.json({"msg":"Error al manipular la sesión, vuelva a loguearse"})
-							}
-						)
+						.then((resultRedis) => {
+							res.json({"jwt": token, "msg": "Succesfully"});
+						}).catch((err) => {
+							res.statusCode = 401
+							res.json({"msg": "Error al manipular la sesión, vuelva a loguearse", "status": "error"})
+						})
 				} else {
 					res.statusCode = 401
-					res.json({"msg":"Nombre de usuario o contraseña incorrecto"})
+					res.json({"msg": "Nombre de usuario o contraseña incorrecto", "status": "error"})
 				}
-			},(err) => {
-
+			}).catch(err => {
 				res.statusCode = 401
-				res.json({"msg":"Nombre de usuario o contraseña incorrecto"})
+				res.json({"msg": err, "status": "error"})
 			})
 	});
 }

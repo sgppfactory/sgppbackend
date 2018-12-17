@@ -64,20 +64,28 @@ ActionInstance.belongsToMany(RolInstance, { through: {model: ActionRol}, foreign
 
 module.exports = {
 	login: (userParams) => {
-		if(_.isString(userParams.username) && _.isString(userParams.password)) {
-			return UserInstance.findOne({
-				attributes: ['id', 'username', 'avatar', 'idPerson']
-			,	where: {
-					username: userParams.username
-				,	password: md5(userParams.password).toString()
-				,	active: true
-				}
-			})
-		}
-
 		return new Promise((resolve,reject)=>{
-			reject("Parámetros no válidos");
-		});
+			if (!userParams) {
+				reject('No se especificaron parámetros')
+			}
+
+			if (_.isEmpty(userParams.username) || _.isEmpty(userParams.password)) {
+				reject('Faltan parámetros obligatorios')
+			}
+
+			if (_.isString(userParams.username) && _.isString(userParams.password)) {
+				return UserInstance.findOne({
+					attributes: ['id', 'username', 'avatar', 'idPerson']
+				,	where: {
+						username: userParams.username
+					,	password: md5(userParams.password).toString()
+					,	active: true
+					}
+				}).then(result => {
+					resolve(result)
+				})
+			}
+		})
 	}
 ,	saveSession: (token, userdata, payload, ip) => {
 		// var redisDB = new redis(config.redis_connect);
@@ -116,7 +124,7 @@ module.exports = {
 
 						redisDB.multi()
 							.hset('auth:'+token, "payload", JSON.stringify(payload))
-							.expire('auth:'+token, 1000000)
+							.expire('auth:'+token, 3600)
 							.hset('auth:'+token, "userdata", JSON.stringify(userdata))
 							.hset('auth:'+token, "implementation", JSON.stringify(implementation))
 							.hset('auth:'+token, "actions", JSON.stringify(actions))
@@ -157,43 +165,32 @@ module.exports = {
 		});
 	}
 ,	getLogBySession: (token) => {
-		return new Promise((resolve,reject)=>{
-			redisDB
-				.hget('auth:'+token, 'userdata')
-				.then((result) => {
-					result = JSON.parse(result)
-					if(!result) {
-						reject("Se venció la sesión")
-					}
+		return redisDB
+			.hget('auth:'+token, 'userdata')
+			.then((result) => {
+				result = JSON.parse(result)
+				if(!result) {
+					reject("Se venció la sesión")
+				}
 
-					Auditory
-						.findAll({where: {idUser: result.id}, limit: 5, order: [['date_hour','DESC']]})
-						.then(resolve).catch(reject)
-					// return redisDB.smembers('loguser:'+result.id)
-					// 			.then()
-				})
-		})
+				return Auditory
+					.findAll({where: {idUser: result.id}, limit: 5, order: [['date_hour','DESC']]})
+			})
 	}
 ,	getPersonBySession: (token) => {
-		return new Promise((resolve,reject)=>{
-			redisDB
-				.hget('auth:'+token, 'userdata')
-				.then((result) => {
-					result = JSON.parse(result)
-					if(!result) {
-						reject("Se venció la sesión")
-					}
-
-					Person.getModel()
-						.findOne({
-							attributes: ['id', 'name', 'lastname', 'email', 'tel', 'cel', 'location', 'dateBirth'], 
-							where: { id: result.idPerson, active: true }
-						}).then(resolve).catch(reject)
-
-							// {where: {idUser: result.id}, limit: 5, order: [['date_hour','DESC']]})
-					// return redisDB.smembers('loguser:'+result.id)
-					// 			.then()
-				})
-		})
+		return redisDB
+			.hget('auth:'+token, 'userdata')
+			.then(userData => {
+				// console.log(userData)
+				userData = JSON.parse(userData)
+				if(!userData) {
+					reject("Se venció la sesión")
+				}
+				return Person.getModel()
+					.findOne({
+						attributes: ['id', 'name', 'lastname', 'email', 'tel', 'cel', 'location', 'dateBirth'], 
+						where: { id: userData.idPerson, active: true }
+					})
+			})
 	}
 }

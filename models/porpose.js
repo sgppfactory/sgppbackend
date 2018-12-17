@@ -406,6 +406,7 @@ module.exports = {
 							})
 						})
 					} else if (params.state == "delete") {
+						// TODO: Existe la duda de que si la propuesta se cancela, no darla de baja (Por ahí se la excluye de los resportes...)
 						toUpdate = {state: "Cancelado", active: false}
 					} else {
 						throw "Error al actualizar Propuesta"

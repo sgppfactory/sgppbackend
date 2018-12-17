@@ -62,6 +62,30 @@ module.exports = app => {
 
 	/**
 	 * @swagger
+	 * path: /reports/try
+	 * operations:
+	 *   -  httpMethod: GET
+	 *      summary: Realiza una simulación de los reportes para previsualizar en gráficos
+	 *      notes: Retorna información de nodos por filtros aplicados
+	 *      responseClass: Node
+	 *      nickname: node
+	 *      consumes: 
+	 *        - application/json
+	 */
+	app.get('/reports/try', authLib.ensureAuthenticated, function(req, res, next) {
+		model
+			.generate(req.params, req.token)
+			.then(result => {
+				res.statusCode = 200
+				res.json({'message': result, 'status': 'OK'})
+			}).catch(err => {
+				res.statusCode = 409
+				res.json({'message': resultLib.getMsgSeq(err), 'status': 'error'})
+			})
+	});
+
+	/**
+	 * @swagger
 	 * path: /reports/:id
 	 * operations:
 	 *   -  httpMethod: GET
@@ -81,30 +105,6 @@ module.exports = app => {
 			}).catch(err => {
 				res.statusCode = 409
 				res.json({"message": resultLib.getMsgSeq(err), "status":"error"})
-			})
-	});
-
-	/**
-	 * @swagger
-	 * path: /reports/try
-	 * operations:
-	 *   -  httpMethod: GET
-	 *      summary: Buscador de reportes
-	 *      notes: Retorna información de nodos por filtros aplicados
-	 *      responseClass: Node
-	 *      nickname: node
-	 *      consumes: 
-	 *        - application/json
-	 */
-	app.get('/reports/try', authLib.ensureAuthenticated, function(req, res, next) {
-		model
-			.generate(req.params, req.token)
-			.then((result) => {
-				res.statusCode = 200
-				res.json({"message": result,"status": "OK"})
-			}).catch(err => {
-				res.statusCode = 409
-				res.json({"message": resultLib.getMsgSeq(err), "status": "error"})
 			})
 	});
 

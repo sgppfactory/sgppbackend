@@ -3,6 +3,7 @@ const search = require('../lib/search');
 const redis = require("../lib/redis"); //Manipulador de la conexión de la BD
 const Porpose = require("./porpose"); //Manipulador de la conexión de la BD
 var redisDB = new redis(model.config.redis_connect);
+var paramsLib = require('../lib/params');
 
 const Report =  model.dbsql.define('report',{
 		id: { 
@@ -63,6 +64,8 @@ const Report =  model.dbsql.define('report',{
 	},{
 		tableName: 'reports'
 	,	timestamps: true
+	,	createdAt: 'created_at'
+	,	updatedAt: 'updated_at'
 	}
 )
 
@@ -100,7 +103,7 @@ module.exports = {
 					throw "Error al obtener datos de sesión"
 				}
 				impldata = JSON.parse(impldata)
-				if (params.filter) {
+				if (!params.filter) {
 					params.filter = []
 				}
 				params.filter.push({
@@ -139,6 +142,7 @@ module.exports = {
 			})
 	}
 ,	generate: (params, token) => {
+		params = paramsLib.purge(params)
 		return redisDB
 			.hget('auth:'+token, 'implementation')
 			.then(impldata => {	
@@ -146,13 +150,78 @@ module.exports = {
 					throw "Error al obtener datos de sesión"
 				}
 				impldata = JSON.parse(impldata)
-				console.log(params)
-				if (params.porpose) {
-					return Porpose.findAll()
+				// PROPUESTAS POR ESTADO DE AVANCE
+				// SELECT COUNT(pp.id) AS cant, pp.state AS estado FROM porpose_project pp
+				// INNER JOIN node n ON pp.id_node = n.id
+				// WHERE n.id_implementation = 1
+				// AND pp.active = 1
+				// GROUP BY pp.state
+
+				// PROPUESTAS POR ETIQUETA
+				// SELECT COUNT(pp.id) AS cant, l.name AS label FROM porpose_project pp
+				// INNER JOIN node n ON pp.id_node = n.id
+				// INNER JOIN label_porpose_project lpp ON pp.id = lpp.id_porpose_project
+				// INNER JOIN label l ON lpp.id_label = l.id
+				// WHERE n.id_implementation = 1
+				// AND pp.active = 1
+				// GROUP BY l.id 
+
+				// PROPUESTAS POR ETIQUETA y NODO
+				// SELECT COUNT(pp.id) AS cant, l.name AS label, n.name AS node FROM porpose_project pp
+				// INNER JOIN node n ON pp.id_node = n.id
+				// INNER JOIN label_porpose_project lpp ON pp.id = lpp.id_porpose_project
+				// INNER JOIN label l ON lpp.id_label = l.id
+				// WHERE n.id_implementation = 1
+				// AND pp.active = 1
+				// GROUP BY l.id, n.id
+
+				// SELECT COUNT(pp.id) AS cant, n.name AS node FROM porpose_project pp
+				// INNER JOIN node n ON pp.id_node = n.id
+				// WHERE n.id_implementation = 1
+				// AND pp.active = 1
+				// GROUP BY n.id
+				var query = 'SELECT COUNT(pp.id) AS cant '
+				var from = 'FROM porpose_project pp'
+				var join = 'INNER JOIN node n ON pp.id_node = n.id '
+				var where = 'WHERE n.id_implementation = ' + impldata.id + ' AND pp.active = 1 '
+				var group = 'GROUP BY '
+
+				if (params.projects && !params.porposes) {
+					where += 'AND pp.type = 2'
+				} else if (params.porposes && !params.projects) {
+					where += 'AND pp.type = 1'
+				} else if(!params.porposes && !params.projects) {
+					throw 'Debe seleccionar un tipo de reporte'
 				}
-				if (params.project) {
-					return Porpose.findAll()	
+
+				if (params.subcategory == 1 || params.subcategory == 2) { // Por etiquetas o categorías
+					query += ', l.name AS labelName'
+					group += 'l.id'
+					if (params.subcategory == 2) {
+						query += ', n.name AS labelSubName'
+						group += ', n.id'
+					}
+					join += 'INNER JOIN label_porpose_project lpp ON pp.id = lpp.id_porpose_project INNER JOIN label l ON lpp.id_label = l.id'
+				} else if (params.subcategory == 3) { // Por avances
+					query += ', pp.state AS labelName'
+					group += 'pp.state'
+				} else if (params.subcategory == 4) { // Por nodo / estructura
+					query += ', n.name AS labelName'
+					group += 'n.id'
+				} else {
+					throw 'Debe seleccionar un subtipo de segregación'
 				}
+
+				if (params.cicle > 0) { // Ciclos en particular
+					where += 'AND id_cicle = ' + params.cicle
+				}// else: Todos los ciclos (Sin filtro)
+
+				return model.dbsql.query(
+					query + ' ' + from + ' ' + join + ' ' + where + ' ' + group,
+					{type: model.dbsql.QueryTypes.SELECT }
+					).then(results => {
+						return results
+					})
 			})
 	}
 }
