@@ -1,5 +1,6 @@
 const model = require('../models/implementation');
 const authLib = require('../lib/auth'); //Librería para manejar la autenticación
+const resultLib = require('../lib/result');
 
 module.exports = function(app) {
 	/**
@@ -27,7 +28,7 @@ module.exports = function(app) {
 				}
 			},(err) => {
 				res.statusCode = 409
-				res.json({"message":err,"status":"error"})
+				res.json({"message": resultLib.getMsgSeq(err),"status": "error"})
 			})
 	});
 
@@ -52,11 +53,11 @@ module.exports = function(app) {
 					res.json({"message":result,"status":"OK"})
 				} else {
 					res.statusCode = 403
-					res.json({"message":"Implementación inexistente","status":"error"})
+					res.json({"message":"Implementación inexistente", "status": "error"})
 				}
 			},(err) => {
 				res.statusCode = 409
-				res.json({"message":err,"status":"error"})
+				res.json({"message": resultLib.getMsgSeq(err), "status": "error"})
 			})
 	});
 
@@ -75,17 +76,18 @@ module.exports = function(app) {
 	app.post('/implementation', authLib.ensureAuthenticated, function(req, res, next) {
 		model
 			.create(req.params, req.token)
-			.then((result) => {
+			.then(result => {
 				if(result) {
 					res.statusCode = 201
-					res.json({"message":"Estructura creada correctamente","status":"OK"})
+					res.json({"message": "Estructura creada correctamente", "status": "OK"})
 				} else {
 					res.statusCode = 403
-					res.json({"message":"Error al crear la configuración", "status":"error"})
+					res.json({"message": "Error al crear la configuración", "status": "error"})
 				}
-			}).catch((err) => {
+			}).catch(err => {
+				console.log(err)
 				res.statusCode = 409
-				res.json({"message": resultLib.getMsgSeq(err), "status":"error"})
+				res.json({"message": resultLib.getMsgSeq(err), "status": "error"})
 			})
 	});
 

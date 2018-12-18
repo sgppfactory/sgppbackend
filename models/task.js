@@ -3,6 +3,7 @@ var Node = require('./node');
 var Person = require('./person');
 var User = require('./user');
 var search = require('../lib/search');
+var paramsLib = require('../lib/params');
 
 const Task =  model.dbsql.define('task',{
 		id: { 
@@ -139,7 +140,6 @@ module.exports = {
 		return redisDB
 			.hgetall('auth:'+token)
 			.then((sessiondata) => {
-				// console.log(sessiondata)
 				sessiondata = JSON.parse(sessiondata)
 				if (!sessiondata) {
 					throw "Error al obtener datos de sesión"

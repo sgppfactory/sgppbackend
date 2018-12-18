@@ -110,6 +110,36 @@ module.exports = app => {
 
 	/**
 	 * @swagger
+	 * path: /reports/:id
+	 * operations:
+	 *   -  httpMethod: DEL
+	 *      summary: Buscador de reportes
+	 *      notes: Retorna información de nodos por filtros aplicados
+	 *      responseClass: Node
+	 *      nickname: node
+	 *      consumes: 
+	 *        - application/json
+	 */
+	app.del('/reports/:id', authLib.ensureAuthenticated, function(req, res, next) {
+		model
+			.remove(req.params.id, req.token)
+			.then(result => {
+				if (result) {
+					res.statusCode = 200
+					res.json({"message": "Reporte eliminado correctamente", "status": "OK"})
+				} else {
+					res.statusCode = 403
+					res.json({"message": "Ocurrió un error al eliminar el reporte, inténtelo nuevamente", "status": "error"})
+				}
+			}).catch(err => {
+				console.log(err)
+				res.statusCode = 409
+				res.json({"message": resultLib.getMsgSeq(err), "status": "error"})
+			})
+	});
+
+	/**
+	 * @swagger
 	 * path: /reports
 	 * operations:
 	 *   -  httpMethod: POST
@@ -139,6 +169,7 @@ module.exports = app => {
 					})	
 				}
 			}).catch(err => {
+				console.log(err)
 				res.statusCode = 409
 				res.json({"message": resultLib.getMsgSeq(err), "status": "error"})
 			})

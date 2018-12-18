@@ -186,7 +186,7 @@ module.exports = {
 	}
 ,	getStageFirstByNode: (idNode) => {
 		return Stage.findAll({
-			attributes: ['id', 'order']
+			attributes: ['id', 'order', 'date_init']
 		,	where: {active: true, order: 1}
 		,	include: [{
 				model: NodeStage

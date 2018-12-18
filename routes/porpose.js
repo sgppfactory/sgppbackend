@@ -46,7 +46,7 @@ module.exports = function(app) {
 					})
 				}
 			}).catch((err) => {
-				// console.log(err)
+				console.log(err)
 				res.statusCode = 409
 				res.json({"message": resultLib.getMsgSeq(err),"status":"error"})
 			})

@@ -69,19 +69,68 @@ const Report =  model.dbsql.define('report',{
 	}
 )
 
+function generateQuery (impldata, params) {
+	var query = 'SELECT COUNT(pp.id) AS cant '
+	var from = 'FROM porpose_project pp'
+	var join = 'INNER JOIN node n ON pp.id_node = n.id '
+	var where = 'WHERE n.id_implementation = ' + impldata.id + ' AND pp.active = 1 '
+	var group = 'GROUP BY '
+
+	if (params.projects && !params.porposes) {
+		where += 'AND pp.type = 2'
+	} else if (params.porposes && !params.projects) {
+		where += 'AND pp.type = 1'
+	} else if(!params.porposes && !params.projects) {
+		throw 'Debe seleccionar un tipo de reporte'
+	}
+
+	if (params.subcategory == 1 || params.subcategory == 2) { // Por etiquetas o categorías
+		query += ', l.name AS labelName'
+		group += 'l.id'
+		if (params.subcategory == 2) { // Por etiquetas o categorías X nodo
+			query += ', n.name AS labelSubName'
+			group += ', n.id'
+		}
+		join += 'INNER JOIN label_porpose_project lpp ON pp.id = lpp.id_porpose_project INNER JOIN label l ON lpp.id_label = l.id'
+	} else if (params.subcategory == 3) { // Por avances
+		query += ', pp.state AS labelName'
+		group += 'pp.state'
+	} else if (params.subcategory == 4) { // Por nodo / estructura
+		query += ', n.name AS labelName'
+		group += 'n.id'
+	} else {
+		throw 'Debe seleccionar un subtipo de segregación'
+	}
+
+	if (params.cicle > 0) { // Ciclos en particular
+		where += 'AND id_cicle = ' + params.cicle
+	}// else: Todos los ciclos (Sin filtro)
+
+	return query + ' ' + from + ' ' + join + ' ' + where + ' ' + group
+}
+
 module.exports = {
 	getModel: () => {
 		return Report
 	}
 ,	create: (params, token) => {
 		return redisDB
-			.hget('auth:'+token, 'implementation')
-			.then(impldata => {	
-				if (!impldata) {
+			.hgetall('auth:' + token)
+			.then(sessionData => {
+				if (!sessionData.implementation) {
 					throw "Error al obtener datos de sesión"
 				}
-				impldata = JSON.parse(impldata)
-				return Report.create(_.extend(params, {idImplementation: impldata.id}))
+
+				let impldata = JSON.parse(sessionData.implementation)
+				let userdata = JSON.parse(sessionData.userdata)
+				var queryParams = JSON.parse(params.query)
+
+				params.query.sql = generateQuery(impldata, queryParams)
+
+				return Report.create(_.extend(
+					params,
+					{active: true, idUser: userdata.id, idImplementation: impldata.id}
+				))
 			})
 	}
 ,	get: (id, token) => {
@@ -92,7 +141,21 @@ module.exports = {
 					throw "Error al obtener datos de sesión"
 				}
 				impldata = JSON.parse(impldata)
-				return redisReport.findOne({where: {id: id, active: true}})
+				return Report.findOne({where: {id: id, active: true, idImplementation: impldata.id}})
+			})
+	}
+,	remove: (id, token) => {
+		return redisDB
+			.hget('auth:'+token, 'implementation')
+			.then(impldata => {	
+				if (!impldata) {
+					throw "Error al obtener datos de sesión"
+				}
+				impldata = JSON.parse(impldata)
+				return Report.update(
+					{active: false},
+					{where: {id: id, active: true, idImplementation: impldata.id}}
+				)
 			})
 	}
 ,	findAll: (params, token) => {
@@ -150,76 +213,9 @@ module.exports = {
 					throw "Error al obtener datos de sesión"
 				}
 				impldata = JSON.parse(impldata)
-				// PROPUESTAS POR ESTADO DE AVANCE
-				// SELECT COUNT(pp.id) AS cant, pp.state AS estado FROM porpose_project pp
-				// INNER JOIN node n ON pp.id_node = n.id
-				// WHERE n.id_implementation = 1
-				// AND pp.active = 1
-				// GROUP BY pp.state
-
-				// PROPUESTAS POR ETIQUETA
-				// SELECT COUNT(pp.id) AS cant, l.name AS label FROM porpose_project pp
-				// INNER JOIN node n ON pp.id_node = n.id
-				// INNER JOIN label_porpose_project lpp ON pp.id = lpp.id_porpose_project
-				// INNER JOIN label l ON lpp.id_label = l.id
-				// WHERE n.id_implementation = 1
-				// AND pp.active = 1
-				// GROUP BY l.id 
-
-				// PROPUESTAS POR ETIQUETA y NODO
-				// SELECT COUNT(pp.id) AS cant, l.name AS label, n.name AS node FROM porpose_project pp
-				// INNER JOIN node n ON pp.id_node = n.id
-				// INNER JOIN label_porpose_project lpp ON pp.id = lpp.id_porpose_project
-				// INNER JOIN label l ON lpp.id_label = l.id
-				// WHERE n.id_implementation = 1
-				// AND pp.active = 1
-				// GROUP BY l.id, n.id
-
-				// SELECT COUNT(pp.id) AS cant, n.name AS node FROM porpose_project pp
-				// INNER JOIN node n ON pp.id_node = n.id
-				// WHERE n.id_implementation = 1
-				// AND pp.active = 1
-				// GROUP BY n.id
-				var query = 'SELECT COUNT(pp.id) AS cant '
-				var from = 'FROM porpose_project pp'
-				var join = 'INNER JOIN node n ON pp.id_node = n.id '
-				var where = 'WHERE n.id_implementation = ' + impldata.id + ' AND pp.active = 1 '
-				var group = 'GROUP BY '
-
-				if (params.projects && !params.porposes) {
-					where += 'AND pp.type = 2'
-				} else if (params.porposes && !params.projects) {
-					where += 'AND pp.type = 1'
-				} else if(!params.porposes && !params.projects) {
-					throw 'Debe seleccionar un tipo de reporte'
-				}
-
-				if (params.subcategory == 1 || params.subcategory == 2) { // Por etiquetas o categorías
-					query += ', l.name AS labelName'
-					group += 'l.id'
-					if (params.subcategory == 2) {
-						query += ', n.name AS labelSubName'
-						group += ', n.id'
-					}
-					join += 'INNER JOIN label_porpose_project lpp ON pp.id = lpp.id_porpose_project INNER JOIN label l ON lpp.id_label = l.id'
-				} else if (params.subcategory == 3) { // Por avances
-					query += ', pp.state AS labelName'
-					group += 'pp.state'
-				} else if (params.subcategory == 4) { // Por nodo / estructura
-					query += ', n.name AS labelName'
-					group += 'n.id'
-				} else {
-					throw 'Debe seleccionar un subtipo de segregación'
-				}
-
-				if (params.cicle > 0) { // Ciclos en particular
-					where += 'AND id_cicle = ' + params.cicle
-				}// else: Todos los ciclos (Sin filtro)
-
-				return model.dbsql.query(
-					query + ' ' + from + ' ' + join + ' ' + where + ' ' + group,
-					{type: model.dbsql.QueryTypes.SELECT }
-					).then(results => {
+				var query = generateQuery(impldata, params)
+				return model.dbsql.query(query, {type: model.dbsql.QueryTypes.SELECT })
+					.then(results => {
 						return results
 					})
 			})

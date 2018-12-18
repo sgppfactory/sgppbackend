@@ -2,7 +2,9 @@ const model = require('./Model');
 const redis = require("../lib/redis"); //Manipulador de la conexión de la BD
 const Node = require('./node');
 const Stage = require('./stage');
+const Cicle = require('./cicle');
 const NodeStage = require('./nodestage');
+var paramsLib = require('../lib/params');
 var redisDB = new redis(model.config.redis_connect);
 
 const Implementation =  model.dbsql.define('implementation',{
@@ -56,23 +58,23 @@ module.exports = {
 ,	create: (params, token) => {
 		return model.dbsql.transaction((t) => {
 			return redisDB
-				.hget('auth:'+token, 'implementation')
+				.hget('auth:' + token, 'implementation')
 				.then((impldata) => {
-					if (!impldata) {
+					if (_.isEmpty(impldata)) {
 						throw "Error al obtener datos de sesión"
 					}
 
 					let appdata = JSON.parse(params.appdata)
 					impldata = JSON.parse(impldata)
 
-					return Node.create(
+					return Node.getModel().create(
 							_.extend(
 								appdata
 							,	{idImplementation: impldata.id}
 							)
 						, 	{transaction: t}
-						).then((resultImpl) => {
-							let nodes = JSON.parse(params.nodes)
+						).then(resultImpl => {
+							var nodes = JSON.parse(params.nodes)
 							if (nodes.length < 1) {
 								throw "Cantidad de nodos incorrectos"
 							}
@@ -82,7 +84,6 @@ module.exports = {
 							if (!nodesByGroup[0]) {
 								throw "No hay nodos de primer nivel"
 							}
-
 							if (!resultImpl.dataValues) {
 								throw "Error al crear los nodos, inténtelo nuevamente más tarde"
 							}
@@ -95,26 +96,29 @@ module.exports = {
 							, 	0
 							, 	nodesByGroup[0]
 							)
-
-						}).then((nodes) => {
+						}).then(nodes => {
+							// console.log("ble", nodes)
 							nodes = _.flatten(nodes)
 							if (!nodes || nodes.length === 0 ) {
 								throw "Error al crear los nodos, inténtelo nuevamente más tarde"
 							}
 
-							let stages = JSON.parse(params.stages)
+							var stages = JSON.parse(params.stages)
 							if (stages.length < 2) {
 								throw "Cantidad de etapas incorrectas"
 							}
-
-							return Cicle.create(
-									{date: new Date(), currency: true, idImplementation: impldata.id}
+							
+							var dateCicle = new Date()
+							
+							return Cicle.getModel().create(
+									{date: dateCicle.getFullYear(), currency: true, idImplementation: impldata.id}
 								, 	{transaction: t}
-								).then((stageRet) => {
+								).then(cicleRet => {
 									// TODO: FALTA CREAR UN CICLO
 									return model.dbsql.Promise.map(stages, (stage) => {
-										stage.isproject = (_.isBoolean(stage.isproject) &&  stage.isproject) 
-											|| stage.isproject === 'true'
+										stage = paramsLib.purge(stage)
+										// stage.isproject = (_.isBoolean(stage.isproject) &&  stage.isproject) 
+										// 	|| stage.isproject === 'true'
 
 										stage.dateInit = changeDate(stage.dateInit)
 
@@ -135,14 +139,12 @@ module.exports = {
 											})
 									})
 								})
-						}).then((toReturn) => {
+						}).then(toReturn => {
 							// creo que acá tengo que tirar la onda
 							ok = _.flatten(toReturn)
 							return ok.length > 0
 						})
 				})
-		}).catch((err) => {
-			return err
 		})
 	}
 ,	get: id => {
@@ -264,7 +266,7 @@ function createNode(nodesByGroup, t, implementationId, idParentNode, level, chil
 
 		delete objectToSave.id
 
-		return Node.create(_.extend(
+		return Node.getModel().create(_.extend(
 			objectToSave
 		,	{ idImplementation: implementationId, idParentNode: idParentNode }
 		), {transaction: t})

@@ -124,7 +124,7 @@ module.exports = {
 
 						redisDB.multi()
 							.hset('auth:'+token, "payload", JSON.stringify(payload))
-							.expire('auth:'+token, 3600)
+							.expire('auth:'+token, 7200)
 							.hset('auth:'+token, "userdata", JSON.stringify(userdata))
 							.hset('auth:'+token, "implementation", JSON.stringify(implementation))
 							.hset('auth:'+token, "actions", JSON.stringify(actions))

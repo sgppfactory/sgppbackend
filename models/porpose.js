@@ -201,15 +201,15 @@ module.exports = {
 	}
 ,	create: (params, token) => {
 		params = paramsLib.purge(params)
-		// console.log(params)
 		return model.dbsql.transaction((t) => {
 			return redisDB
-				.hget('auth:'+token, 'implementation')
-				.then((impldata) => {
-					impldata = JSON.parse(impldata)
-					if (!impldata) {
+				.hgetall('auth:'+token)
+				.then((sessionData) => {
+					if (!sessionData) {
 						throw "Error al obtener datos de sesión"
 					}
+					let impldata = JSON.parse(sessionData.implementation)
+					let userdata = JSON.parse(sessionData.userdata)
 
 					return Node.getModel()
 						.findOne({where: {idImplementation: impldata.id, id: params.idNode}})
@@ -246,9 +246,24 @@ module.exports = {
 													} 
 													throw "Etiqueta incorrecta, seleccione otra etiqueta."
 												}).then(lp => {
-													return Task.create().then(task => {
+													var dateHour = new Date(firstStage[0].dataValues.date_init)
+													if (Object.prototype.toString.call(dateHour) === "[object Date]") {
+														dateHour.setHours(9)
+														return Task.getModel().create({
+															title: 'Reunión de tratamiento por propuesta',
+															notes: 'Corresponde a la propuesta ' + params.title,
+															idPorposeProject: porpose.dataValues.id,
+															idNode: params.idNode,
+															active: true,
+															dateHour: dateHour,
+															duration: '01:00',
+															idUserAudit: userdata.id
+														}, 	{transaction: t}).then(task => {
+															return porpose
+														})
+													} else {
 														return porpose
-													})
+													}
 												})
 											})
 										})
