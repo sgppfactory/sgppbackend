@@ -163,14 +163,16 @@ module.exports = app => {
 		model
 			.put(req.params)
 			.then((result) => {
-				if(result) {
-					res.statusCode = 200
-					res.json({"message":"Persona modificada correctamente", "id": req.params.id ,"status":"OK"})
-				} else {
-					res.statusCode = 403
-					res.json({"msg":"La persona solicitada no existe","status":"error"})
-				}
-			},(err) => {
+				// if(result) {
+				res.statusCode = 200
+				res.json({"message":"Persona modificada correctamente", "id": req.params.id ,"status":"OK"})
+				// } 
+				// else {
+				// 	res.statusCode = 403
+				// 	res.json({"message":"La persona solicitada no existe","status":"error"})
+				// }
+			}).catch((err) => {
+				console.log(err)
 				res.statusCode = 409
 				res.json({"message": err, "status":"error"})
 			})

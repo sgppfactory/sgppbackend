@@ -449,11 +449,12 @@ module.exports = {
 								percentAcum += item.dataValues.percent
 								acountAcum += item.dataValues.amount
 							})
+							console.log(percentAcum, acountAcum)
 							params.advance = JSON.parse(params.advance)
 
-							if (percentAcum + params.advance.percent >= 100) {
-								throw "El porcentaje supera al 100%"
-							}
+							// if (percentAcum + params.advance.percent >= 100) {
+							// 	throw "El porcentaje supera al 100%"
+							// }
 							// No voy a validar excedentes de monto
 							// if (acountAcum + params.advance.mount >= porpose.mount) {
 							// 	throw "El monto supera el monto total del proyecto"
@@ -469,11 +470,11 @@ module.exports = {
 									,	active: true
 									}
 								}).then(result => {
-									if (result && result[0]) {
+									// if (result && result[0]) {
 										return {id: params.id, state: params.state}
-									} else {
-										throw "Error al modificar la Propuesta o Proyecto."
-									}
+									// } else {
+									// 	throw "Error al modificar la Propuesta o Proyecto."
+									// }
 								})	
 							})
 						})

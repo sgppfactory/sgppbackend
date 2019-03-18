@@ -241,23 +241,27 @@ module.exports = {
 			return Person
 				.findOne({where: {email: params.email, active: true}})
 				.then((aPerson) => {
-					if (aPerson) {
-						throw "Ya existe una persona con el mismo email ingresado."
-					} else {
+					// if (aPerson) {
+					// 	throw "Ya existe una persona con el mismo email ingresado."
+					// } else {
+						// console.log(params)
+						var user = _.clone(params.withuser)
+						delete params.withuser
 						return Person.update(
 							params, 
 							{where: {id: params.id, active: true}},
 							{transaction: t}
 						).then(updateResult => {
-							if (!updateResult[0]){
-								throw "Error al actualizar a la persona seleccionada. Inténtelo nuevamente.";
-							}
+							// console.log(updateResult)
+							// if (!updateResult[0]){
+							// 	throw "Error al actualizar a la persona seleccionada. Inténtelo nuevamente.";
+							// }
 							return UserInstance.findOne({
 									attributes: ['id', 'username', 'idRol'],
 									where: {idPerson: params.id, active: true}
 								}).then((resultUser) => {
-									console.log(resultUser)
-									throw ""
+									// console.log(resultUser)
+									// throw ""
 									// resultUser.dataValues
 									if (params.withuser == 'true' && resultUser.dataValues) {
 										password = parseInt(Math.random() * Date.now()).toString()
@@ -294,7 +298,7 @@ module.exports = {
 									} 
 								})
 						})
-					}
+					// }
 				})
 		})
 	}
